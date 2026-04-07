@@ -1,12 +1,10 @@
 package com.barber.api.model.criteria;
 
-import com.barber.api.model.Account;
 import com.barber.api.model.Nation;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import lombok.Data;

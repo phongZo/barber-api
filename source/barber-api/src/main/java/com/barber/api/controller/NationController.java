@@ -8,6 +8,7 @@ import com.barber.api.dto.nation.NationAdminDto;
 import com.barber.api.dto.nation.NationDto;
 import com.barber.api.exception.BadRequestException;
 import com.barber.api.exception.NotFoundException;
+import com.barber.api.exception.UnauthorizationException;
 import com.barber.api.form.nation.CreateNationForm;
 import com.barber.api.form.nation.UpdateNationForm;
 import com.barber.api.mapper.NationMapper;
@@ -51,6 +52,9 @@ public class NationController extends ABasicController{
   @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('NA_C')")
   public ApiMessageDto<String> create(@Valid @RequestBody CreateNationForm createNationForm, BindingResult bindingResult){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     validateNationKind(createNationForm.getKind(), createNationForm.getParentId());
     validateNationName(createNationForm.getName(), createNationForm.getKind(), createNationForm.getParentId(), null);
@@ -68,6 +72,9 @@ public class NationController extends ABasicController{
   @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('NA_L')")
   public ApiMessageDto<ResponseListDto<List<NationAdminDto>>> listByAdmin(NationCriteria nationCriteria, Pageable pageable){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<ResponseListDto<List<NationAdminDto>>> apiMessageDto = new ApiMessageDto<>();
     ResponseListDto<List<NationAdminDto>> responseListDto = new ResponseListDto<>();
     Page<Nation> nations = nationRepository.findAll(nationCriteria.getSpecification(), pageable);
@@ -97,6 +104,9 @@ public class NationController extends ABasicController{
   @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('NA_V')")
   public ApiMessageDto<NationAdminDto> getByAdmin(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<NationAdminDto> apiMessageDto = new ApiMessageDto<>();
     Nation nation = nationRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Nation not found", ErrorCode.NATION_ERROR_NOT_FOUND));
@@ -109,6 +119,9 @@ public class NationController extends ABasicController{
   @PutMapping(value = "/update", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('NA_U')")
   public ApiMessageDto<String> update(@Valid @RequestBody UpdateNationForm updateNationForm, BindingResult bindingResult){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Nation nation = nationRepository.findById(updateNationForm.getId())
         .orElseThrow(() -> new NotFoundException("Nation not found", ErrorCode.NATION_ERROR_NOT_FOUND));
@@ -119,7 +132,8 @@ public class NationController extends ABasicController{
     }
 
     nationMapper.fromUpdateNationFormToEntity(updateNationForm, nation);
-    if (updateNationForm.getParentId() != null && !updateNationForm.getParentId().equals(nation.getParent().getId())){
+    if ((nation.getParent() == null && !updateNationForm.getKind().equals(BarberConstant.NATION_KIND_PROVINCE))
+      || (updateNationForm.getParentId() != null && !updateNationForm.getParentId().equals(nation.getParent().getId()))){
       Nation parent = nationRepository.findById(updateNationForm.getParentId())
           .orElseThrow(() -> new NotFoundException("Parent not found", ErrorCode.NATION_ERROR_NOT_FOUND));
       nation.setParent(parent);
@@ -132,6 +146,9 @@ public class NationController extends ABasicController{
   @DeleteMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('NA_D')")
   public ApiMessageDto<String> delete(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Nation nation = nationRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Nation not found", ErrorCode.NATION_ERROR_NOT_FOUND));

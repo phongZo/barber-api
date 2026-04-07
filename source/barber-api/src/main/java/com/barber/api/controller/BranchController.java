@@ -8,6 +8,7 @@ import com.barber.api.dto.branch.BranchAdminDto;
 import com.barber.api.dto.branch.BranchDto;
 import com.barber.api.exception.BadRequestException;
 import com.barber.api.exception.NotFoundException;
+import com.barber.api.exception.UnauthorizationException;
 import com.barber.api.form.brach.CreateBranchForm;
 import com.barber.api.form.brach.UpdateBranchForm;
 import com.barber.api.mapper.BranchMapper;
@@ -39,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/v1/branch")
 @CrossOrigin(origins = "*", allowedHeaders = "*")
 @Slf4j
-public class BranchController {
+public class BranchController extends ABasicController{
   @Autowired
   BranchRepository branchRepository;
 
@@ -52,6 +53,9 @@ public class BranchController {
   @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BR_C')")
   public ApiMessageDto<String> create(@Valid @RequestBody CreateBranchForm createBranchForm, BindingResult bindingResult){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Boolean existBranch = branchRepository.existsByName(createBranchForm.getName());
     if (existBranch){
@@ -76,6 +80,9 @@ public class BranchController {
   @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BR_L')")
   public ApiMessageDto<ResponseListDto<List<BranchAdminDto>>> listByAdmin(BranchCriteria branchCriteria, Pageable pageable){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<ResponseListDto<List<BranchAdminDto>>> apiMessageDto = new ApiMessageDto<>();
     ResponseListDto<List<BranchAdminDto>> responseListDto = new ResponseListDto<>();
     Page<Branch> branches = branchRepository.findAll(branchCriteria.getSpecification(), pageable);
@@ -105,6 +112,9 @@ public class BranchController {
   @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BR_V')")
   public ApiMessageDto<BranchAdminDto> getByAdmin(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<BranchAdminDto> apiMessageDto = new ApiMessageDto<>();
     Branch branch = branchRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Branch not found", ErrorCode.BRANCH_ERROR_NOT_FOUND));
@@ -128,6 +138,9 @@ public class BranchController {
   @PutMapping(value = "/update", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BR_U')")
   public ApiMessageDto<String> update(@Valid @RequestBody UpdateBranchForm updateBranchForm, BindingResult bindingResult){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Branch branch = branchRepository.findById(updateBranchForm.getId())
             .orElseThrow(() -> new NotFoundException("Branch not found", ErrorCode.BRANCH_ERROR_NOT_FOUND));
@@ -138,9 +151,10 @@ public class BranchController {
       }
     }
 
-    if (!updateBranchForm.getProvinceId().equals(branch.getProvince().getId())
-    || !updateBranchForm.getDistrictId().equals(branch.getDistrict().getId())
-    || !updateBranchForm.getWardId().equals(branch.getWard().getId())){
+    if ((branch.getProvince() == null || branch.getDistrict() == null || branch.getWard() == null)
+        || !updateBranchForm.getProvinceId().equals(branch.getProvince().getId())
+        || !updateBranchForm.getDistrictId().equals(branch.getDistrict().getId())
+        || !updateBranchForm.getWardId().equals(branch.getWard().getId())){
       Nation[] validatedAddress = getValidatedAddress(
           updateBranchForm.getProvinceId(),
           updateBranchForm.getDistrictId(),
@@ -160,6 +174,9 @@ public class BranchController {
   @DeleteMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BR_D')")
   public ApiMessageDto<String> delete(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Branch branch = branchRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Branch not found", ErrorCode.BRANCH_ERROR_NOT_FOUND));
