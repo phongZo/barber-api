@@ -269,6 +269,12 @@ class NationControllerTest {
       updateForm.setKind(BarberConstant.NATION_KIND_DISTRICT);
       updateForm.setParentId(1L);
 
+      Nation newDistrict = new Nation();
+      newDistrict.setId(2L);
+      newDistrict.setName("Quận 1");
+      newDistrict.setKind(BarberConstant.NATION_KIND_DISTRICT);
+      newDistrict.setParent(mockProvince);
+
       when(nationRepository.findById(2L)).thenReturn(Optional.of(mockDistrict));
       when(nationRepository.findById(1L)).thenReturn(Optional.of(mockProvince));
       when(nationRepository.existsByNameAndParentIdAndIdNot(anyString(), anyLong(), anyLong())).thenReturn(false);
@@ -279,7 +285,7 @@ class NationControllerTest {
 
       verify(nationRepository, times(1)).existsByNameAndParentIdAndIdNot(eq(updateForm.getName()), eq(updateForm.getParentId()), eq(updateForm.getId()));
       verify(nationRepository, times(1)).save(eq(mockDistrict));
-      verify(nationMapper, times(1)).fromUpdateNationFormToEntity(eq(updateForm), eq(mockDistrict));
+      verify(nationMapper, times(1)).fromUpdateNationFormToEntity(eq(updateForm), eq(newDistrict));
     }
 
     @Test
