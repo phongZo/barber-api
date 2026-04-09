@@ -9,6 +9,7 @@ import com.barber.api.dto.customer.CustomerDto;
 import com.barber.api.dto.customer.CustomerProfileDto;
 import com.barber.api.exception.BadRequestException;
 import com.barber.api.exception.NotFoundException;
+import com.barber.api.exception.UnauthorizationException;
 import com.barber.api.form.customer.SignUpCustomerForm;
 import com.barber.api.form.customer.UpdateCustomerForm;
 import com.barber.api.form.customer.UpdateCustomerProfileForm;
@@ -22,15 +23,12 @@ import com.barber.api.repository.AccountRepository;
 import com.barber.api.repository.CustomerRepository;
 import com.barber.api.repository.GroupRepository;
 import com.barber.api.service.BarberApiService;
-import com.barber.api.service.BarberOTPService;
 import com.barber.api.utils.AESUtils;
 import java.util.Date;
 import java.util.List;
-import javax.swing.ListModel;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -124,6 +122,9 @@ public class CustomerController extends ABasicController{
   @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('CUS_L')")
   public ApiMessageDto<ResponseListDto<List<CustomerDto>>> list(CustomerCriteria customerCriteria, Pageable pageable){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<ResponseListDto<List<CustomerDto>>> apiMessageDto = new ApiMessageDto<>();
     ResponseListDto<List<CustomerDto>> responseListDto = new ResponseListDto<>();
     Page<Customer> customers = customerRepository.findAll(customerCriteria.getSpecification(), pageable);
@@ -139,6 +140,9 @@ public class CustomerController extends ABasicController{
   @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('CUS_V')")
   public ApiMessageDto<CustomerDto> get(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<CustomerDto> apiMessageDto = new ApiMessageDto<>();
     Customer customer = customerRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
@@ -163,11 +167,14 @@ public class CustomerController extends ABasicController{
   @PutMapping(value = "/update", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('CUS_U')")
   public ApiMessageDto<String> update(@Valid @RequestBody UpdateCustomerForm updateCustomerForm, BindingResult bindingResult){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
-    Account account = accountRepository.findById(updateCustomerForm.getId())
-        .orElseThrow(() -> new NotFoundException("Account not found", ErrorCode.ACCOUNT_ERROR_NOT_FOUND));
     Customer customer = customerRepository.findById(updateCustomerForm.getId())
         .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
+    Account account = accountRepository.findById(updateCustomerForm.getId())
+        .orElseThrow(() -> new NotFoundException("Account not found", ErrorCode.ACCOUNT_ERROR_NOT_FOUND));
 
     if (!updateCustomerForm.getUsername().equals(account.getUsername())){
       Boolean existUsername = accountRepository.existsByUsername(updateCustomerForm.getUsername());
@@ -258,6 +265,9 @@ public class CustomerController extends ABasicController{
   @DeleteMapping(value = "/delete/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('CUS_D')")
   public ApiMessageDto<String> delete(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Customer customer = customerRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
