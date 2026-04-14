@@ -24,9 +24,13 @@ public class BarberConstant {
 
     public static final List<Integer> NATION_KINDS = List.of(NATION_KIND_PROVINCE, NATION_KIND_DISTRICT, NATION_KIND_WARD);
 
-    public static final Integer EMPLOYEE_GENDER_MALE = 1;
-    public static final Integer EMPLOYEE_GENDER_FEMALE = 2;
-    public static final Integer EMPLOYEE_GENDER_OTHER = 3;
+    public static final Integer CATEGORY_KIND_SYSTEM = 0;
+    public static final Integer CATEGORY_KIND_SERVICE_GROUP = 1;
+    public static final Integer CATEGORY_KIND_SERVICE = 2;
+    public static final Integer CATEGORY_KIND_OPTION = 3;
+
+    public static final List<Integer> CATEGORY_KINDS = List.of(CATEGORY_KIND_SYSTEM, CATEGORY_KIND_SERVICE_GROUP, CATEGORY_KIND_SERVICE, CATEGORY_KIND_OPTION);
+
 
     public static final Integer GROUP_KIND_ADMIN = 1;
     public static final Integer GROUP_KIND_MANAGER = 2;

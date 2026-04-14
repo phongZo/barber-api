@@ -41,6 +41,12 @@ public class ErrorCode {
     public static final String BRANCH_ERROR_EXIST = "ERROR-BRANCH-0001";
 
     /**
+     * Starting error code CATEGORY
+     * */
+    public static final String CATEGORY_ERROR_NOT_FOUND = "ERROR-CATEGORY-0000";
+    public static final String CATEGORY_ERROR_EXIST = "ERROR-CATEGORY-0001";
+
+    /**
      * Starting error code GROUP
      * */
     public static final String GROUP_ERROR_NOT_FOUND = "ERROR-GROUP-0000";

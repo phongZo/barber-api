@@ -43,6 +43,7 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
                 .antMatchers("/v1/account/request-forget-password", "/v1/account/forget-password", "/v1/account/verify", "/v1/account/resend").permitAll()
                 .antMatchers("/v1/nation/client-list").permitAll()
                 .antMatchers("/v1/branch/client-list", "/v1/branch/client-get/**").permitAll()
+                .antMatchers("/v1/category/client-list", "/v1/category/client-get/**").permitAll()
                 .antMatchers("/v1/file/download/**").permitAll()
                 .antMatchers("/**").authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
