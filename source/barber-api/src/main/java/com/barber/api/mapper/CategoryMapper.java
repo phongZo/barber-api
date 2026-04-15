@@ -65,6 +65,7 @@ public interface CategoryMapper {
 
   @Mapping(source = "name", target = "name")
   @Mapping(source = "description", target = "description")
+  @Mapping(source = "image", target = "image")
   @Mapping(source = "isSelected", target = "isSelected")
   @BeanMapping(ignoreByDefault = true)
   void fromUpdateCategoryFormToEntity(UpdateCategoryForm updateCategoryForm, @MappingTarget Category category);

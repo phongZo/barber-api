@@ -14,6 +14,7 @@ import com.barber.api.mapper.CategoryMapper;
 import com.barber.api.model.Category;
 import com.barber.api.model.criteria.CategoryCriteria;
 import com.barber.api.repository.CategoryRepository;
+import com.barber.api.repository.ServiceRepository;
 import com.barber.api.utils.JsonUtils;
 import java.util.List;
 import javax.validation.Valid;
@@ -41,6 +42,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class CategoryController extends ABasicController{
   @Autowired
   CategoryRepository categoryRepository;
+
+  @Autowired
+  ServiceRepository serviceRepository;
 
   @Autowired
   CategoryMapper categoryMapper;
@@ -202,6 +206,7 @@ public class CategoryController extends ABasicController{
     Category category = categoryRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Category not found", ErrorCode.CATEGORY_ERROR_NOT_FOUND));
     Long oldParentId = category.getParent().getId() != null ? category.getParent().getId() : null;
+    serviceRepository.setNullByCategoryId(id);
     categoryRepository.setNullChildrenByParentId(id);
     categoryRepository.decreaseOrderAfterRemove(category.getKind(), oldParentId, category.getOrderInParent());
     categoryRepository.delete(category);

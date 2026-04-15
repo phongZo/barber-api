@@ -46,6 +46,18 @@ public class ErrorCode {
     public static final String CATEGORY_ERROR_NOT_FOUND = "ERROR-CATEGORY-0000";
     public static final String CATEGORY_ERROR_EXIST = "ERROR-CATEGORY-0001";
 
+
+    /**
+     * Starting error code SERVICE
+     * */
+    public static final String SERVICE_ERROR_NOT_FOUND = "ERROR-SERVICE-0000";
+
+    /**
+     * Starting error code SERVICE STEP
+     * */
+    public static final String SERVICE_STEP_ERROR_NOT_FOUND = "ERROR-SERVICE-STEP-0000";
+    public static final String SERVICE_STEP_ERROR_EXIST = "ERROR-SERVICE-STEP-0001";
+
     /**
      * Starting error code GROUP
      * */
