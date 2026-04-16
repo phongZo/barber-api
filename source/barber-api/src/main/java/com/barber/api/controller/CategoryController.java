@@ -10,6 +10,7 @@ import com.barber.api.exception.NotFoundException;
 import com.barber.api.exception.UnauthorizationException;
 import com.barber.api.form.category.CreateCategoryForm;
 import com.barber.api.form.category.UpdateCategoryForm;
+import com.barber.api.form.category.UpdateCategoryOrderForm;
 import com.barber.api.mapper.CategoryMapper;
 import com.barber.api.model.Category;
 import com.barber.api.model.criteria.CategoryCriteria;
@@ -17,6 +18,7 @@ import com.barber.api.repository.CategoryRepository;
 import com.barber.api.repository.ServiceRepository;
 import com.barber.api.utils.JsonUtils;
 import java.util.List;
+import java.util.Objects;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -211,6 +213,42 @@ public class CategoryController extends ABasicController{
     categoryRepository.decreaseOrderAfterRemove(category.getKind(), oldParentId, category.getOrderInParent());
     categoryRepository.delete(category);
     apiMessageDto.setMessage("Delete category success");
+    return apiMessageDto;
+  }
+
+  @PutMapping(value = "/update-order", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("hasRole('CA_UO')")
+  public ApiMessageDto<String> updateOrder(@RequestBody UpdateCategoryOrderForm updateCategoryOrderForm, BindingResult bindingResult){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
+    ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
+    Category category = categoryRepository.findById(updateCategoryOrderForm.getId())
+        .orElseThrow(() -> new NotFoundException("Category not found", ErrorCode.CATEGORY_ERROR_NOT_FOUND));
+
+    Long oldParentId = category.getParent() != null ? category.getParent().getId() : null;
+    if (Objects.equals(oldParentId, updateCategoryOrderForm.getParentId()) && category.getKind().equals(updateCategoryOrderForm.getKind())){
+      if (updateCategoryOrderForm.getOrderInParent() < category.getOrderInParent()){
+        categoryRepository.increaseOrderRange(category.getKind(), oldParentId, updateCategoryOrderForm.getOrderInParent(), category.getOrderInParent() - 1);
+      } else if (updateCategoryOrderForm.getOrderInParent() > category.getOrderInParent()) {
+        categoryRepository.decreaseOrderRange(category.getKind(), oldParentId, category.getOrderInParent() + 1, updateCategoryOrderForm.getOrderInParent());
+      }
+      category.setOrderInParent(updateCategoryOrderForm.getOrderInParent());
+    } else {
+      categoryRepository.decreaseOrderAfterRemove(category.getKind(), oldParentId, category.getOrderInParent());
+      Integer maxOrder = categoryRepository.findMaxOrderInParent(updateCategoryOrderForm.getKind(), updateCategoryOrderForm.getParentId());
+      category.setOrderInParent(maxOrder + 1);
+      category.setKind(updateCategoryOrderForm.getKind());
+      if (updateCategoryOrderForm.getParentId() != null){
+        Category parent = categoryRepository.findById(updateCategoryOrderForm.getParentId())
+            .orElseThrow(() -> new NotFoundException("Parent not found", ErrorCode.CATEGORY_ERROR_NOT_FOUND));
+        category.setParent(parent);
+      } else {
+        category.setParent(null);
+      }
+    }
+    categoryRepository.save(category);
+    apiMessageDto.setMessage("Update category order success");
     return apiMessageDto;
   }
 }

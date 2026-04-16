@@ -34,5 +34,19 @@ public interface CategoryRepository extends JpaRepository<Category, Long>,
   @Query("UPDATE Category c SET c.parent = null WHERE c.parent.id = :parentId")
   void setNullChildrenByParentId(@Param("parentId") Long parentId);
 
-  List<Category> findByParentIdOrderByOrderInParentAsc(Long parenId);
+  @Modifying
+  @Transactional
+  @Query("UPDATE Category c SET c.orderInParent = c.orderInParent + 1 " +
+      "WHERE c.kind = :kind AND " +
+      "((:parentId IS NULL AND c.parent IS NULL) OR c.parent.id = :parentId) " +
+      "AND c.orderInParent BETWEEN :start AND :end")
+  void increaseOrderRange(@Param("kind") Integer kind, @Param("parentId") Long parentId, @Param("start") Integer start, @Param("end") Integer end);
+
+  @Modifying
+  @Transactional
+  @Query("UPDATE Category c SET c.orderInParent = c.orderInParent - 1 " +
+      "WHERE c.kind = :kind AND " +
+      "((:parentId IS NULL AND c.parent IS NULL) OR c.parent.id = :parentId) " +
+      "AND c.orderInParent BETWEEN :start AND :end")
+  void decreaseOrderRange(@Param("kind") Integer kind, @Param("parentId") Long parentId, @Param("start") Integer start, @Param("end") Integer end);
 }
