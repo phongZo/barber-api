@@ -51,4 +51,23 @@ public class JsonUtils {
       return null;
     }
   }
+
+  public static <T> T convertJsonStringToClass(Object json, Class<T> clazz) {
+    try {
+      if (json == null) {
+        return null;
+      }
+
+      if (json instanceof String) {
+        String jsonRaw = ((String) json).trim();
+        return getMapper().readValue(jsonRaw, clazz);
+      }
+
+      return getMapper().convertValue(json, clazz);
+
+    } catch (Exception e) {
+      log.error("===> Error convert JSON string to class: {}", e.getMessage());
+      return null;
+    }
+  }
 }

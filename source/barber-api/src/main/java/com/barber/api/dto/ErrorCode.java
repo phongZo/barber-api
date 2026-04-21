@@ -59,6 +59,11 @@ public class ErrorCode {
     public static final String SERVICE_STEP_ERROR_EXIST = "ERROR-SERVICE-STEP-0001";
 
     /**
+     * Starting error code BOOKING
+     * */
+    public static final String BOOKING_ERROR_NOT_FOUND = "ERROR-BOOKING-0000";
+
+    /**
      * Starting error code GROUP
      * */
     public static final String GROUP_ERROR_NOT_FOUND = "ERROR-GROUP-0000";

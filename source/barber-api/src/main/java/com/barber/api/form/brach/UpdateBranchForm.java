@@ -3,6 +3,7 @@ package com.barber.api.form.brach;
 import com.barber.api.validation.Phone;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
@@ -31,7 +32,8 @@ public class UpdateBranchForm {
   @Phone
   @ApiModelProperty(name = "addressLine")
   private String phone;
-  @NotEmpty(message = "setting cannot be null")
+  @NotNull(message = "setting cannot be null")
+  @Valid
   @ApiModelProperty(name = "setting")
-  private String setting;
+  private BranchSettingForm setting;
 }
