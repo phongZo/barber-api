@@ -43,6 +43,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -160,6 +161,32 @@ public class BookingController extends ABasicController{
     return apiMessageDto;
   }
 
+  @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("hasRole('BK_V')")
+  public ApiMessageDto<BookingAdminDto> getByAdmin(@PathVariable("id") Long id){
+    if (!isAdmin()){
+      throw new UnauthorizationException("User is not an admin");
+    }
+    ApiMessageDto<BookingAdminDto> apiMessageDto = new ApiMessageDto<>();
+    Booking booking = bookingRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+    BookingAdminDto bookingAdminDto = bookingMapper.fromEntityToBookingAdminDto(booking);
+    apiMessageDto.setData(bookingAdminDto);
+    apiMessageDto.setMessage("Get detail booking success");
+    return apiMessageDto;
+  }
+
+  @GetMapping(value = "/client-get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ApiMessageDto<BookingDto> getByClient(@PathVariable("id") Long id){
+    ApiMessageDto<BookingDto> apiMessageDto = new ApiMessageDto<>();
+    Booking booking = bookingRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+    BookingDto bookingDto = bookingMapper.fromEntityToBookingDto(booking);
+    apiMessageDto.setData(bookingDto);
+    apiMessageDto.setMessage("Get detail booking success");
+    return apiMessageDto;
+  }
+
   @PutMapping(value = "/update-status", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BK_UST')")
   public ApiMessageDto<String> updateStatus(@Valid @RequestBody UpdateStatusBookingForm updateStatusBookingForm, BindingResult bindingResult){
@@ -189,6 +216,8 @@ public class BookingController extends ABasicController{
         throw new UnauthorizationException("Customer cannot cancel booking");
       }
       booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
+    } else {
+      throw new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND);
     }
 
     bookingRepository.save(booking);

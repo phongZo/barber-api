@@ -1,6 +1,7 @@
 package com.barber.api.mapper;
 
 import com.barber.api.dto.bookingService.BookingServiceAdminDto;
+import com.barber.api.dto.bookingService.BookingServiceDto;
 import com.barber.api.dto.bookingService.ServiceInfoDto;
 import com.barber.api.model.BookingService;
 import com.barber.api.utils.JsonUtils;
@@ -28,6 +29,18 @@ public interface BookingServiceMapper {
 
   @IterableMapping(elementTargetType = BookingServiceAdminDto.class, qualifiedByName = "fromEntityToBookingServiceAdminDto")
   List<BookingServiceAdminDto> fromEntityToBookingServiceAdminDtoList(List<BookingService> bookingServices);
+
+  @Mapping(source = "id", target = "id")
+  @Mapping(source = "serviceId", target = "serviceId")
+  @Mapping(source = "price", target = "price")
+  @Mapping(source = "serviceInfo", target = "serviceInfo", qualifiedByName = "fromEntityToServiceInfoDto")
+  @Mapping(source = "booking", target = "booking", qualifiedByName = "fromEntityToBookingDto")
+  @BeanMapping(ignoreByDefault = true)
+  @Named("fromEntityToBookingServiceDto")
+  BookingServiceDto fromEntityToBookingServiceDto(BookingService bookingService);
+
+  @IterableMapping(elementTargetType = BookingServiceDto.class, qualifiedByName = "fromEntityToBookingServiceDto")
+  List<BookingServiceDto> fromEntityToBookingServiceDtoList(List<BookingService> bookingServices);
 
   @Named("fromEntityToServiceInfoDto")
   default ServiceInfoDto fromEntityToServiceInfoDto(String json) {

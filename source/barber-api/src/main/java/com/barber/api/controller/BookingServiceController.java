@@ -3,6 +3,7 @@ package com.barber.api.controller;
 import com.barber.api.dto.ApiMessageDto;
 import com.barber.api.dto.ResponseListDto;
 import com.barber.api.dto.bookingService.BookingServiceAdminDto;
+import com.barber.api.dto.bookingService.BookingServiceDto;
 import com.barber.api.exception.UnauthorizationException;
 import com.barber.api.mapper.BookingServiceMapper;
 import com.barber.api.model.BookingService;
@@ -43,6 +44,23 @@ public class BookingServiceController extends ABasicController{
     Page<BookingService> bookingServices = bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
     List<BookingServiceAdminDto> bookingServiceAdminDtos = bookingServiceMapper.fromEntityToBookingServiceAdminDtoList(bookingServices.getContent());
     responseListDto.setContent(bookingServiceAdminDtos);
+    responseListDto.setTotalElements(bookingServices.getTotalElements());
+    responseListDto.setTotalPages(bookingServices.getTotalPages());
+    apiMessageDto.setData(responseListDto);
+    apiMessageDto.setMessage("Get list booking service success");
+    return apiMessageDto;
+  }
+
+  @GetMapping(value = "/client-list", produces = MediaType.APPLICATION_JSON_VALUE)
+  public ApiMessageDto<ResponseListDto<List<BookingServiceDto>>> listByClient(BookingServiceCriteria bookingServiceCriteria, Pageable pageable){
+    ApiMessageDto<ResponseListDto<List<BookingServiceDto>>> apiMessageDto = new ApiMessageDto<>();
+    ResponseListDto<List<BookingServiceDto>> responseListDto = new ResponseListDto<>();
+    if (getCurrentUser() != null){
+      bookingServiceCriteria.setCustomerId(getCurrentUser());
+    }
+    Page<BookingService> bookingServices = bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
+    List<BookingServiceDto> bookingServiceDtos = bookingServiceMapper.fromEntityToBookingServiceDtoList(bookingServices.getContent());
+    responseListDto.setContent(bookingServiceDtos);
     responseListDto.setTotalElements(bookingServices.getTotalElements());
     responseListDto.setTotalPages(bookingServices.getTotalPages());
     apiMessageDto.setData(responseListDto);
