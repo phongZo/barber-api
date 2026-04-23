@@ -1,10 +1,10 @@
 package com.barber.api.form.booking;
 
-import com.barber.api.validation.Phone;
+import com.barber.api.validation.Email;
 import lombok.Data;
 
 @Data
 public class BookingCustomerInfoForm {
-  @Phone
-  private String phone;
+  @Email
+  private String email;
 }

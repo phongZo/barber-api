@@ -4,7 +4,5 @@ import lombok.Data;
 
 @Data
 public class BookingCustomerInfoDto {
-  private String phone;
-  private String clientKey;
-  private String bookingCode;
+  private String email;
 }

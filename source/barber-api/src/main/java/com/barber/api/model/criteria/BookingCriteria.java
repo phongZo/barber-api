@@ -22,9 +22,7 @@ public class BookingCriteria {
   private Long customerId;
   private String username;
   private Long branchId;
-  private String phone;
-  private String clientKey;
-  private String bookingCode;
+  private String email;
   private Integer status;
 
   public Specification<Booking> getSpecification() {
@@ -58,15 +56,15 @@ public class BookingCriteria {
           predicates.add(cb.equal(branchJoin.get("id"), getBranchId()));
         }
 
-        if (StringUtils.isNotBlank(getPhone())) {
+        if (StringUtils.isNotBlank(getEmail())) {
           predicates.add(cb.equal(
               cb.function("JSON_UNQUOTE", String.class,
                   cb.function("JSON_EXTRACT", String.class,
                       root.get("customerInfo"),
-                      cb.literal("$.phone")
+                      cb.literal("$.email")
                   )
               ),
-              getPhone()
+              getEmail()
           ));
         }
         query.orderBy(cb.desc(root.get("createdDate")));

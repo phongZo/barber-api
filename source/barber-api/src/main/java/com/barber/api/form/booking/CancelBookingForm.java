@@ -1,6 +1,6 @@
 package com.barber.api.form.booking;
 
-import com.barber.api.validation.Phone;
+import com.barber.api.validation.Email;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotNull;
@@ -13,7 +13,7 @@ public class CancelBookingForm {
   @ApiModelProperty(name = "id")
   private Long id;
 
-  @Phone(allowNull = true)
-  @ApiModelProperty(name = "phone")
-  private String phone;
+  @Email(allowNull = true)
+  @ApiModelProperty(name = "email")
+  private String email;
 }

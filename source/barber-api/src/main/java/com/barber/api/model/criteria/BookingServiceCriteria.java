@@ -19,7 +19,7 @@ public class BookingServiceCriteria {
   private Long id;
   private Long bookingId;
   private Long customerId;
-  private String phone;
+  private String email;
 
   public Specification<BookingService> getSpecification() {
     return new Specification<BookingService>() {
@@ -42,15 +42,15 @@ public class BookingServiceCriteria {
           predicates.add(cb.equal(bookingJoin.get("customer").get("id"), getCustomerId()));
         }
 
-        if (StringUtils.isNotBlank(getPhone())){
+        if (StringUtils.isNotBlank(getEmail())){
           predicates.add(cb.equal(
                   cb.function(
                       "JSON_EXTRACT",
                       String.class,
                       root.get("booking").get("customerInfo"),
-                      cb.literal("$.phone")
+                      cb.literal("$.email")
                   ),
-                  getPhone()
+                  getEmail()
               )
           );
         }
