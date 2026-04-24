@@ -2,10 +2,12 @@ package com.barber.api.utils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -48,6 +50,41 @@ public class JsonUtils {
       return getMapper().convertValue(json, type);
     } catch (Exception e) {
       log.error("===> Error convert JSON string to list: {}", e.getMessage());
+      return null;
+    }
+  }
+
+  public static <T> T convertJsonStringToClass(Object json, Class<T> clazz) {
+    try {
+      if (json == null) {
+        return null;
+      }
+
+      if (json instanceof String) {
+        String jsonRaw = ((String) json).trim();
+        return getMapper().readValue(jsonRaw, clazz);
+      }
+
+      return getMapper().convertValue(json, clazz);
+
+    } catch (Exception e) {
+      log.error("===> Error convert JSON string to class: {}", e.getMessage());
+      return null;
+    }
+  }
+
+  public static Map<String, Object> convertJsonStringToMap(Object json){
+    try {
+      if (json == null){
+        return null;
+      }
+      if (json instanceof String){
+        String jsonRaw = ((String) json).trim();
+        return getMapper().readValue(jsonRaw, new TypeReference<Map<String, Object>>() {});
+      }
+      return getMapper().convertValue(json, new TypeReference<Map<String, Object>>() {});
+    } catch (Exception e){
+      log.error("===> Error convert JSON to map: {}", e.getMessage());
       return null;
     }
   }

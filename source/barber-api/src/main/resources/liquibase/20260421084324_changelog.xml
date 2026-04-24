@@ -1,0 +1,66 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="Authentication" id="1776761012478-1">
+        <createTable tableName="db_barber_booking">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="db_barber_bookingPK"/>
+            </column>
+            <column name="customer_info" type="TEXT"/>
+            <column name="discount" type="DOUBLE PRECISION"/>
+            <column name="total_price" type="DOUBLE PRECISION"/>
+            <column name="booking_date" type="datetime"/>
+            <column name="branch_id" type="BIGINT"/>
+            <column name="customer_id" type="BIGINT"/>
+            <column name="status" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Authentication" id="1776761012478-2">
+        <createTable tableName="db_barber_booking_service">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="db_barber_booking_servicePK"/>
+            </column>
+            <column name="service_id" type="BIGINT"/>
+            <column name="service_info" type="VARCHAR(255)"/>
+            <column name="price" type="DOUBLE PRECISION"/>
+            <column name="booking_id" type="BIGINT"/>
+            <column name="status" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_date" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Authentication" id="1776761012478-3">
+        <addForeignKeyConstraint baseColumnNames="customer_id" baseTableName="db_barber_booking" constraintName="FKn6y08bccbb92mf9t8s4cbbuqg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="db_barber_customer" validate="true"/>
+    </changeSet>
+    <changeSet author="Authentication" id="1776761012478-4">
+        <addForeignKeyConstraint baseColumnNames="booking_id" baseTableName="db_barber_booking_service" constraintName="FKp5rsg0un9glaojufwsociu0en" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="db_barber_booking" validate="true"/>
+    </changeSet>
+    <changeSet author="Authentication" id="1776761012478-5">
+        <addForeignKeyConstraint baseColumnNames="branch_id" baseTableName="db_barber_booking" constraintName="FKtj5liju9u187sjbh95m0i6ubr" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="db_barber_branch" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

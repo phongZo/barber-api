@@ -17,6 +17,7 @@ import com.barber.api.model.Nation;
 import com.barber.api.model.criteria.BranchCriteria;
 import com.barber.api.repository.BranchRepository;
 import com.barber.api.repository.NationRepository;
+import com.barber.api.utils.JsonUtils;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +72,7 @@ public class BranchController extends ABasicController{
     branch.setWard(address[2]);
     branch.setDistrict(address[1]);
     branch.setProvince(address[0]);
+    branch.setSetting(JsonUtils.convertJsonToString(createBranchForm.getSetting()));
     branchRepository.save(branch);
 
     apiMessageDto.setMessage("Create branch success");
@@ -166,6 +168,7 @@ public class BranchController extends ABasicController{
       branch.setWard(validatedAddress[2]);
     }
     branchMapper.fromUpdateBranchFormToEntity(updateBranchForm, branch);
+    branch.setSetting(JsonUtils.convertJsonToString(updateBranchForm.getSetting()));
     branchRepository.save(branch);
     apiMessageDto.setMessage("Update branch success");
     return apiMessageDto;

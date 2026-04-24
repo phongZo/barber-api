@@ -59,6 +59,15 @@ public class ErrorCode {
     public static final String SERVICE_STEP_ERROR_EXIST = "ERROR-SERVICE-STEP-0001";
 
     /**
+     * Starting error code BOOKING
+     * */
+    public static final String BOOKING_ERROR_NOT_FOUND = "ERROR-BOOKING-0000";
+    public static final String BOOKING_ERROR_INVALID_ACTION = "ERROR-BOOKING-0001";
+    public static final String BOOKING_ERROR_TOKEN_EXPIRED = "ERROR-BOOKING-0002";
+    public static final String BOOKING_ERROR_INVALID_EMAIL = "ERROR-BOOKING-0003";
+    public static final String BOOKING_ERROR_INVALID_STATUS = "ERROR-BOOKING-0004";
+
+    /**
      * Starting error code GROUP
      * */
     public static final String GROUP_ERROR_NOT_FOUND = "ERROR-GROUP-0000";

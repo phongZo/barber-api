@@ -171,14 +171,14 @@ public class CategoryController extends ABasicController{
       }
     }
 
-    if ((!updateCategoryForm.getKind().equals(category.getKind()))
-        || (updateCategoryForm.getParentId() != null && !updateCategoryForm.getParentId().equals(category.getParent().getId()))){
-      Long oldParentId = category.getParent().getId() != null ? category.getParent().getId() : null;
-      Long newParentId = updateCategoryForm.getParentId() != null
-          ? updateCategoryForm.getParentId()
-          : oldParentId;
+    Long oldParentId = category.getParent() != null ? category.getParent().getId() : null;
+    boolean isChangeKind = !updateCategoryForm.getKind().equals(category.getKind());
+    boolean isChangeParent = (oldParentId == null && updateCategoryForm.getParentId() != null)
+        || (oldParentId != null && !oldParentId.equals(updateCategoryForm.getParentId()));
+
+    if (isChangeKind || isChangeParent){
       categoryRepository.decreaseOrderAfterRemove(category.getKind(), oldParentId, category.getOrderInParent());
-      Integer maxOrder = categoryRepository.findMaxOrderInParent(updateCategoryForm.getKind(), newParentId);
+      Integer maxOrder = categoryRepository.findMaxOrderInParent(updateCategoryForm.getKind(), updateCategoryForm.getParentId());
       category.setOrderInParent(maxOrder + 1);
     }
 
@@ -187,14 +187,17 @@ public class CategoryController extends ABasicController{
       category.setAdditionalInfo(JsonUtils.convertJsonToString(updateCategoryForm.getAdditionalInfoList()));
     }
 
-    if (category.getParent() == null && updateCategoryForm.getId() != null
-        || !updateCategoryForm.getParentId().equals(category.getParent().getId())){
-      Category parent = categoryRepository.findById(updateCategoryForm.getParentId())
-          .orElseThrow(() -> new NotFoundException("Parent not found", ErrorCode.CATEGORY_ERROR_NOT_FOUND));
-      category.setParent(parent);
+    if (isChangeParent){
+      if (updateCategoryForm.getParentId() != null){
+        Category parent = categoryRepository.findById(updateCategoryForm.getParentId())
+            .orElseThrow(() -> new NotFoundException("Parent not found", ErrorCode.CATEGORY_ERROR_NOT_FOUND));
+        category.setParent(parent);
+      } else {
+        category.setParent(null);
+      }
     }
     categoryRepository.save(category);
-    apiMessageDto.setMessage("Create category success");
+    apiMessageDto.setMessage("Update category success");
     return apiMessageDto;
   }
 

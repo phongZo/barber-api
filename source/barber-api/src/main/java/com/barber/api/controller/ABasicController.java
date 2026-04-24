@@ -15,9 +15,13 @@ public class ABasicController {
     @Autowired
     private UserServiceImpl userService;
 
-    public long getCurrentUser(){
-        BarberJwt barberJwt = userService.getAddInfoFromToken();
-        return barberJwt.getAccountId();
+    public Long getCurrentUser(){
+        if (userService.getAddInfoFromToken() != null){
+            BarberJwt barberJwt = userService.getAddInfoFromToken();
+            return barberJwt.getAccountId();
+        } else {
+            return null;
+        }
     }
 
     public long getCurrentDevice(){
