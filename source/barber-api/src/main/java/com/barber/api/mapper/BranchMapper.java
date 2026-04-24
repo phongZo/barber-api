@@ -2,12 +2,9 @@ package com.barber.api.mapper;
 
 import com.barber.api.dto.branch.BranchAdminDto;
 import com.barber.api.dto.branch.BranchDto;
-import com.barber.api.dto.branch.BranchSettingDto;
-import com.barber.api.dto.category.CategoryAdditionalInfoDto;
 import com.barber.api.form.brach.CreateBranchForm;
 import com.barber.api.form.brach.UpdateBranchForm;
 import com.barber.api.model.Branch;
-import com.barber.api.utils.JsonUtils;
 import java.util.List;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.IterableMapping;
@@ -25,6 +22,7 @@ public interface BranchMapper {
   @Mapping(source = "name", target = "name")
   @Mapping(source = "addressLine", target = "addressLine")
   @Mapping(source = "phone", target = "phone")
+  @Mapping(source = "setting", target = "setting")
   @BeanMapping(ignoreByDefault = true)
   Branch fromCreateBranchFormToEntity(CreateBranchForm createBranchForm);
 
@@ -32,7 +30,7 @@ public interface BranchMapper {
   @Mapping(source = "name", target = "name")
   @Mapping(source = "addressLine", target = "addressLine")
   @Mapping(source = "phone", target = "phone")
-  @Mapping(source = "setting", target = "setting", qualifiedByName = "fromEntityToBranchSettingDto")
+  @Mapping(source = "setting", target = "setting")
   @Mapping(source = "ward", target = "ward", qualifiedByName = "fromEntityToNationAdminDto")
   @Mapping(source = "district", target = "district", qualifiedByName = "fromEntityToNationAdminDto")
   @Mapping(source = "province", target = "province", qualifiedByName = "fromEntityToNationAdminDto")
@@ -47,7 +45,7 @@ public interface BranchMapper {
   @Mapping(source = "name", target = "name")
   @Mapping(source = "addressLine", target = "addressLine")
   @Mapping(source = "phone", target = "phone")
-  @Mapping(source = "setting", target = "setting", qualifiedByName = "fromEntityToBranchSettingDto")
+  @Mapping(source = "setting", target = "setting")
   @Mapping(source = "ward", target = "ward", qualifiedByName = "fromEntityToNationDto")
   @Mapping(source = "district", target = "district", qualifiedByName = "fromEntityToNationDto")
   @Mapping(source = "province", target = "province", qualifiedByName = "fromEntityToNationDto")
@@ -58,14 +56,10 @@ public interface BranchMapper {
   @IterableMapping(elementTargetType = BranchDto.class, qualifiedByName = "fromEntityToBranchDto")
   List<BranchDto> fromEntityToBranchDtoList(List<Branch> branches);
 
-  @Named("fromEntityToBranchSettingDto")
-  default BranchSettingDto fromEntityToBranchSettingDto(String json) {
-    return JsonUtils.convertJsonStringToClass(json, BranchSettingDto.class);
-  }
-
   @Mapping(source = "name", target = "name")
   @Mapping(source = "addressLine", target = "addressLine")
   @Mapping(source = "phone", target = "phone")
+  @Mapping(source = "setting", target = "setting")
   @BeanMapping(ignoreByDefault = true)
   void fromUpdateBranchFormToEntity(UpdateBranchForm updateBranchForm, @MappingTarget Branch branch);
 }

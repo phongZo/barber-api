@@ -12,5 +12,5 @@ public class BranchAdminDto extends ABasicAdminDto {
   private NationAdminDto district;
   private NationAdminDto province;
   private String phone;
-  private BranchSettingDto setting;
+  private String setting;
 }

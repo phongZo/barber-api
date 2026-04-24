@@ -5,7 +5,10 @@ import com.barber.api.dto.ApiMessageDto;
 import com.barber.api.dto.ErrorCode;
 import com.barber.api.dto.ResponseListDto;
 import com.barber.api.dto.booking.BookingAdminDto;
+import com.barber.api.dto.booking.BookingCustomerInfoDto;
 import com.barber.api.dto.booking.BookingDto;
+import com.barber.api.dto.bookingService.BookingServiceAdminDto;
+import com.barber.api.dto.bookingService.BookingServiceDto;
 import com.barber.api.exception.BadRequestException;
 import com.barber.api.exception.NotFoundException;
 import com.barber.api.exception.UnauthorizationException;
@@ -16,12 +19,14 @@ import com.barber.api.form.booking.CreateBookingForm;
 import com.barber.api.form.booking.UpdateStatusBookingForm;
 import com.barber.api.form.bookingService.ServiceInfoForm;
 import com.barber.api.mapper.BookingMapper;
+import com.barber.api.mapper.BookingServiceMapper;
 import com.barber.api.model.Booking;
 import com.barber.api.model.BookingService;
 import com.barber.api.model.Branch;
 import com.barber.api.model.Customer;
 import com.barber.api.model.Service;
 import com.barber.api.model.criteria.BookingCriteria;
+import com.barber.api.model.criteria.BookingServiceCriteria;
 import com.barber.api.repository.BookingRepository;
 import com.barber.api.repository.BookingServiceRepository;
 import com.barber.api.repository.BranchRepository;
@@ -43,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -78,6 +84,9 @@ public class BookingController extends ABasicController{
 
   @Autowired
   BookingMapper bookingMapper;
+
+  @Autowired
+  BookingServiceMapper bookingServiceMapper;
 
   @Autowired
   BarberApiService barberApiService;
@@ -198,27 +207,88 @@ public class BookingController extends ABasicController{
 
   @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BK_V')")
-  public ApiMessageDto<BookingAdminDto> getByAdmin(@PathVariable("id") Long id){
+  public ApiMessageDto<BookingAdminDto> getByAdmin(@PathVariable("id") Long id) {
+
     if (!isAdmin()){
       throw new UnauthorizationException("User is not an admin");
     }
+
     ApiMessageDto<BookingAdminDto> apiMessageDto = new ApiMessageDto<>();
+
     Booking booking = bookingRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+
     BookingAdminDto bookingAdminDto = bookingMapper.fromEntityToBookingAdminDto(booking);
+
+    BookingServiceCriteria bookingServiceCriteria = new BookingServiceCriteria();
+    bookingServiceCriteria.setBookingId(booking.getId());
+
+    if (booking.getCustomer() != null){
+      bookingServiceCriteria.setCustomerId(booking.getCustomer().getId());
+    } else {
+      BookingCustomerInfoDto customerInfoDto =
+          JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoDto.class);
+      bookingServiceCriteria.setEmail(customerInfoDto.getEmail());
+    }
+
+    Pageable pageable = PageRequest.of(0, 10);
+
+    Page<BookingService> bookingServices =
+        bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
+
+    ResponseListDto<List<BookingServiceAdminDto>> responseListDto = new ResponseListDto<>();
+    responseListDto.setContent(
+        bookingServiceMapper.fromEntityToBookingServiceAdminDtoList(bookingServices.getContent())
+    );
+    responseListDto.setTotalElements(bookingServices.getTotalElements());
+    responseListDto.setTotalPages(bookingServices.getTotalPages());
+
+    bookingAdminDto.setBookingServices(responseListDto);
     apiMessageDto.setData(bookingAdminDto);
     apiMessageDto.setMessage("Get detail booking success");
+
     return apiMessageDto;
   }
 
   @GetMapping(value = "/client-get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ApiMessageDto<BookingDto> getByClient(@PathVariable("id") Long id){
+  public ApiMessageDto<BookingDto> getByClient(@PathVariable("id") Long id) {
+
     ApiMessageDto<BookingDto> apiMessageDto = new ApiMessageDto<>();
+
     Booking booking = bookingRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+
+    BookingServiceCriteria bookingServiceCriteria = new BookingServiceCriteria();
+    bookingServiceCriteria.setBookingId(id);
+
+    if (getCurrentUser() != null){
+      bookingServiceCriteria.setCustomerId(getCurrentUser());
+    } else {
+      BookingCustomerInfoDto bookingCustomerInfoDto =
+          JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoDto.class);
+      bookingServiceCriteria.setEmail(bookingCustomerInfoDto.getEmail());
+    }
+
+    Pageable pageable = PageRequest.of(0, 10);
+
+    Page<BookingService> bookingServices =
+        bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
+
+    ResponseListDto<List<BookingServiceDto>> responseListDto = new ResponseListDto<>();
+
+    List<BookingServiceDto> bookingServiceDtos =
+        bookingServiceMapper.fromEntityToBookingServiceDtoList(bookingServices.getContent());
+
+    responseListDto.setContent(bookingServiceDtos);
+    responseListDto.setTotalElements(bookingServices.getTotalElements());
+    responseListDto.setTotalPages(bookingServices.getTotalPages());
+
     BookingDto bookingDto = bookingMapper.fromEntityToBookingDto(booking);
+    bookingDto.setBookingServices(responseListDto);
+
     apiMessageDto.setData(bookingDto);
     apiMessageDto.setMessage("Get detail booking success");
+
     return apiMessageDto;
   }
 

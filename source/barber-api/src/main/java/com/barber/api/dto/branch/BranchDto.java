@@ -12,5 +12,5 @@ public class BranchDto {
   private NationDto district;
   private NationDto province;
   private String phone;
-  private BranchSettingDto setting;
+  private String setting;
 }
