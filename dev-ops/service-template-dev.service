@@ -1,5 +1,5 @@
 [Unit]
-Description=Mgr api service 
+Description=Barber api service
 
 [Service]
 #User=root #use user with restricted permissions
