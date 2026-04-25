@@ -34,6 +34,7 @@ public interface BranchMapper {
   @Mapping(source = "ward", target = "ward", qualifiedByName = "fromEntityToNationAdminDto")
   @Mapping(source = "district", target = "district", qualifiedByName = "fromEntityToNationAdminDto")
   @Mapping(source = "province", target = "province", qualifiedByName = "fromEntityToNationAdminDto")
+  @Mapping(source = "status", target = "status")
   @BeanMapping(ignoreByDefault = true)
   @Named("fromEntityToBranchAdminDto")
   BranchAdminDto fromEntityToBranchAdminDto(Branch branch);

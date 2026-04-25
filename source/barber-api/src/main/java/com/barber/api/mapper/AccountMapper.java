@@ -42,6 +42,7 @@ public interface AccountMapper {
     @Mapping(source = "group", target = "group", qualifiedByName = "fromEntityToGroupDto")
     @Mapping(source = "avatarPath", target = "avatarPath")
     @Mapping(source = "isSuperAdmin", target = "isSuperAdmin")
+    @Mapping(source = "status", target = "status")
     @BeanMapping(ignoreByDefault = true)
     @Named("fromAccountToDto")
     AccountDto fromAccountToDto(Account account);

@@ -20,6 +20,8 @@ import com.barber.api.model.Customer;
 import com.barber.api.model.Group;
 import com.barber.api.model.criteria.CustomerCriteria;
 import com.barber.api.repository.AccountRepository;
+import com.barber.api.repository.BookingRepository;
+import com.barber.api.repository.BookingServiceRepository;
 import com.barber.api.repository.CustomerRepository;
 import com.barber.api.repository.GroupRepository;
 import com.barber.api.service.BarberApiService;
@@ -59,6 +61,9 @@ public class CustomerController extends ABasicController{
 
   @Autowired
   GroupRepository groupRepository;
+
+  @Autowired
+  BookingRepository bookingRepository;
 
   @Autowired
   CustomerMapper customerMapper;
@@ -273,11 +278,17 @@ public class CustomerController extends ABasicController{
         .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
     Account account = accountRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Account not found", ErrorCode.ACCOUNT_ERROR_NOT_FOUND));
-    if (StringUtils.isNotEmpty(account.getAvatarPath())){
-      barberApiService.deleteFile(account.getAvatarPath());
+    Boolean existBooking = bookingRepository.existsByCustomerId(id);
+    if (existBooking){
+      account.setStatus(BarberConstant.STATUS_DELETE);
+      accountRepository.save(account);
+    } else {
+      if (StringUtils.isNotEmpty(account.getAvatarPath())){
+        barberApiService.deleteFile(account.getAvatarPath());
+      }
+      customerRepository.delete(customer);
+      accountRepository.delete(account);
     }
-    customerRepository.delete(customer);
-    accountRepository.delete(account);
     apiMessageDto.setMessage("Delete customer success");
     return apiMessageDto;
   }

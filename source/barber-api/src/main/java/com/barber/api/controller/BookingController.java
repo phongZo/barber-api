@@ -43,6 +43,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -96,36 +97,57 @@ public class BookingController extends ABasicController{
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Branch branch = branchRepository.findById(createBookingForm.getBranchId())
         .orElseThrow(() -> new NotFoundException("Branch not found", ErrorCode.BRANCH_ERROR_NOT_FOUND));
+    if (Objects.equals(branch.getStatus(), BarberConstant.BRANCH_STATUS_INACTIVE)){
+      throw new BadRequestException("Branch inactive", ErrorCode.BRANCH_ERROR_INACTIVE);
+    }
 
     List<Service> services = serviceRepository.findByIdIn(createBookingForm.getServiceIds());
     if (services.size() != createBookingForm.getServiceIds().size()) {
       throw new NotFoundException("Service not found", ErrorCode.SERVICE_ERROR_NOT_FOUND);
     }
 
-    Booking booking = new Booking();
-    booking.setBranch(branch);
-    booking.setDiscount(createBookingForm.getDiscount());
+    Long customerId = getCurrentUser() != null ? getCurrentUser() : null;
+    String email = createBookingForm.getCustomerInfo() != null ? createBookingForm.getCustomerInfo().getEmail() : null;
 
-    boolean isGuest = true;
-
-    if (getCurrentUser() != null){
-      Customer customer = customerRepository.findById(getCurrentUser())
-          .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
-      booking.setCustomer(customer);
-      isGuest = false;
-    } else if (createBookingForm.getCustomerInfo() != null) {
-      booking.setCustomerInfo(JsonUtils.convertJsonToString(createBookingForm.getCustomerInfo()));
-    } else {
+    if (customerId == null && StringUtils.isEmpty(email)){
       throw new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND);
     }
 
     LocalDate date = LocalDate.parse(createBookingForm.getDay(), DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     LocalTime time = LocalTime.parse(createBookingForm.getTime(), DateTimeFormatter.ofPattern("HH:mm"));
     ZonedDateTime vnDateTime = ZonedDateTime.of(date, time, BarberConstant.VN_ZONE);
+    ZonedDateTime now = ZonedDateTime.now(BarberConstant.VN_ZONE);
 
-    booking.setBookingDate(Date.from(vnDateTime.toInstant()));
+    if (vnDateTime.isBefore(now)) {
+      throw new BadRequestException("Booking date cannot be in the past", ErrorCode.BOOKING_ERROR_INVALID_TIME);
+    }
 
-    booking.setStatus(isGuest ? BarberConstant.BOOKING_STATUS_PENDING : BarberConstant.BOOKING_STATUS_BOOKING);
+    Date bookingDate = Date.from(vnDateTime.toInstant());
+
+    Boolean existBooking = (customerId != null)
+        ? bookingRepository.existsByCustomerIdAndBookingDateAndStatusIn(customerId, bookingDate, BarberConstant.CHECK_BOOKING_STATUS)
+        : bookingRepository.existsByEmailAndBookingDateAndStatus(email, bookingDate, BarberConstant.CHECK_BOOKING_STATUS) > 0;
+
+    if (existBooking){
+      throw new BadRequestException("Booking already exist in day", ErrorCode.BOOKING_ERROR_EXIST);
+    }
+
+    Booking booking = new Booking();
+    booking.setBranch(branch);
+    booking.setDiscount(createBookingForm.getDiscount());
+    booking.setBookingDate(bookingDate);
+
+    boolean isGuest = customerId == null;
+
+    if (!isGuest){
+      Customer customer = customerRepository.findById(customerId)
+          .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
+      booking.setCustomer(customer);
+      booking.setStatus(BarberConstant.BOOKING_CASE_STATUS_BOOKING);
+    } else if (StringUtils.isNotEmpty(email)) {
+      booking.setCustomerInfo(JsonUtils.convertJsonToString(createBookingForm.getCustomerInfo()));
+      booking.setStatus(BarberConstant.BOOKING_STATUS_PENDING);
+    }
 
     bookingRepository.save(booking);
 
@@ -141,11 +163,11 @@ public class BookingController extends ABasicController{
     double totalPrice = 0;
 
     for (Service service : services){
+      double price = service.getPrice() - (service.getPrice() * (service.getSaleOff() / 100));
+
       BookingService bookingService = new BookingService();
       bookingService.setServiceId(service.getId());
       bookingService.setBooking(booking);
-
-      double price = service.getPrice() - (service.getPrice() * (service.getSaleOff() / 100));
       bookingService.setPrice(price);
 
       ServiceInfoForm serviceInfoForm = new ServiceInfoForm();
@@ -335,12 +357,11 @@ public class BookingController extends ABasicController{
     Booking booking = bookingRepository.findById(cancelBookingForm.getId())
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
 
-    Boolean isGuest = true;
-    if (getCurrentUser() != null){
+    Boolean isGuest = getCurrentUser() == null;
+    if (!isGuest){
       Customer customer = customerRepository.findById(getCurrentUser())
               .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
       booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
-      isGuest = false;
       bookingRepository.save(booking);
     } else if (StringUtils.isNotEmpty(cancelBookingForm.getEmail())){
       BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
@@ -375,16 +396,18 @@ public class BookingController extends ABasicController{
     String action = data.get("action").toString();
     Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
 
+    Booking booking = bookingRepository.findById(bookingId)
+        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+
     if (!BarberConstant.BOOKING_ACTION_CREATE.equalsIgnoreCase(action)) {
       throw new BadRequestException("Invalid action", ErrorCode.BOOKING_ERROR_INVALID_ACTION);
     }
 
     if (System.currentTimeMillis() > exp) {
+      booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
+      bookingRepository.save(booking);
       throw new BadRequestException("Token expired", ErrorCode.BOOKING_ERROR_TOKEN_EXPIRED);
     }
-
-    Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
 
     BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
 
@@ -409,6 +432,9 @@ public class BookingController extends ABasicController{
     String action = data.get("action").toString();
     Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
 
+    Booking booking = bookingRepository.findById(bookingId)
+        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+
     if (!BarberConstant.BOOKING_ACTION_CANCEL.equalsIgnoreCase(action)) {
       throw new BadRequestException("Invalid action", ErrorCode.BOOKING_ERROR_INVALID_ACTION);
     }
@@ -416,9 +442,6 @@ public class BookingController extends ABasicController{
     if (System.currentTimeMillis() > exp) {
       throw new BadRequestException("Token expired", ErrorCode.BOOKING_ERROR_TOKEN_EXPIRED);
     }
-
-    Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
 
     BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
 
@@ -435,7 +458,7 @@ public class BookingController extends ABasicController{
 
   private void sendConfirmCreateEmail(String email, String token){
     String subject = "Xác nhận lịch đặt";
-    String link = "http://localhost:8787/v1/booking/confirm-create?token=" + token;
+    String link = "http://localhost:5173/confirm-create?token=" + token;
     String html = "<div style=\"font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9;\">" +
         "<h2 style=\"color: #2c3e50; text-align: center;\">Xác nhận lịch đặt</h2>" +
         "<p style=\"font-size: 16px; line-height: 1.6;\">Bạn vừa thực hiện đặt lịch tại hệ thống.</p>" +
@@ -453,7 +476,7 @@ public class BookingController extends ABasicController{
 
   private void sendConfirmCancelEmail(String email, String token){
     String subject = "Xác nhận hủy lịch";
-    String link = "http://localhost:8787/v1/booking/confirm-cancel?token=" + token;
+    String link = "http://localhost:5173/confirm-cancel?token=" + token;
     String html = "<div style=\"font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9;\">" +
         "<h2 style=\"color: #e74c3c; text-align: center;\">Xác nhận hủy lịch</h2>" +
         "<p style=\"font-size: 16px; line-height: 1.6;\">Bạn đã yêu cầu hủy lịch đặt.</p>" +

@@ -15,6 +15,7 @@ import com.barber.api.mapper.BranchMapper;
 import com.barber.api.model.Branch;
 import com.barber.api.model.Nation;
 import com.barber.api.model.criteria.BranchCriteria;
+import com.barber.api.repository.BookingRepository;
 import com.barber.api.repository.BranchRepository;
 import com.barber.api.repository.NationRepository;
 import java.util.List;
@@ -46,6 +47,9 @@ public class BranchController extends ABasicController{
 
   @Autowired
   NationRepository nationRepository;
+
+  @Autowired
+  BookingRepository bookingRepository;
 
   @Autowired
   BranchMapper branchMapper;
@@ -180,7 +184,13 @@ public class BranchController extends ABasicController{
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Branch branch = branchRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Branch not found", ErrorCode.BRANCH_ERROR_NOT_FOUND));
-    branchRepository.delete(branch);
+    Boolean existBooking = bookingRepository.existsByBranchId(id);
+    if (existBooking){
+      branch.setStatus(BarberConstant.BRANCH_STATUS_INACTIVE);
+      branchRepository.save(branch);
+    } else {
+      branchRepository.delete(branch);
+    }
     apiMessageDto.setMessage("Delete branch success");
     return apiMessageDto;
   }

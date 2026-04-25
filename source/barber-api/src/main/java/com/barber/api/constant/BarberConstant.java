@@ -32,7 +32,6 @@ public class BarberConstant {
 
     public static final List<Integer> CATEGORY_KINDS = List.of(CATEGORY_KIND_SYSTEM, CATEGORY_KIND_SERVICE_GROUP, CATEGORY_KIND_SERVICE, CATEGORY_KIND_OPTION);
 
-
     public static final int BOOKING_CASE_STATUS_PENDING = 0;
     public static final int BOOKING_CASE_STATUS_BOOKING = 1;
     public static final int BOOKING_CASE_STATUS_COMPLETED = 2;
@@ -43,9 +42,13 @@ public class BarberConstant {
     public static final Integer BOOKING_STATUS_COMPLETED = 2;
     public static final Integer BOOKING_STATUS_CANCELED = 3;
     public static final List<Integer> BOOKING_STATUS = List.of(BOOKING_STATUS_PENDING, BOOKING_STATUS_BOOKING, BOOKING_STATUS_COMPLETED, BOOKING_STATUS_CANCELED);
+    public static final List<Integer> CHECK_BOOKING_STATUS = List.of(BOOKING_STATUS_PENDING, BOOKING_STATUS_BOOKING);
+
 
     public static final String BOOKING_ACTION_CREATE = "CREATE";
     public static final String BOOKING_ACTION_CANCEL = "CANCEL";
+
+    public static final Integer BRANCH_STATUS_INACTIVE = -1;
 
     public static final Integer GROUP_KIND_ADMIN = 1;
     public static final Integer GROUP_KIND_MANAGER = 2;
