@@ -20,6 +20,9 @@ import com.barber.api.dto.account.AccountUserDto;
 import com.barber.api.dto.booking.BookingAdminDto;
 import com.barber.api.dto.booking.BookingCustomerInfoDto;
 import com.barber.api.dto.booking.BookingDto;
+import com.barber.api.dto.bookingService.BookingServiceAdminDto;
+import com.barber.api.dto.bookingService.BookingServiceDto;
+import com.barber.api.dto.bookingService.ServiceInfoDto;
 import com.barber.api.dto.branch.BranchAdminDto;
 import com.barber.api.dto.branch.BranchDto;
 import com.barber.api.dto.customer.CustomerDto;
@@ -33,6 +36,7 @@ import com.barber.api.form.booking.CreateBookingForm;
 import com.barber.api.form.booking.UpdateStatusBookingForm;
 import com.barber.api.jwt.BarberJwt;
 import com.barber.api.mapper.BookingMapper;
+import com.barber.api.mapper.BookingServiceMapper;
 import com.barber.api.model.Account;
 import com.barber.api.model.Booking;
 import com.barber.api.model.BookingService;
@@ -49,7 +53,10 @@ import com.barber.api.service.BarberApiService;
 import com.barber.api.service.impl.UserServiceImpl;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -94,6 +101,9 @@ public class BookingControllerTest {
   BookingMapper bookingMapper;
 
   @Mock
+  BookingServiceMapper bookingServiceMapper;
+
+  @Mock
   UserServiceImpl userService;
 
   @Mock
@@ -121,6 +131,9 @@ public class BookingControllerTest {
 
   @BeforeEach
   void initData() throws ParseException {
+    LocalDate today = LocalDate.now().plusDays(1);
+    String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+
     Account mockAccount = new Account();
     mockAccount.setId(1L);
     mockAccount.setUsername("trunghao");
@@ -160,7 +173,7 @@ public class BookingControllerTest {
     mockBooking1.setCustomer(mockCustomer);
     mockBooking1.setBranch(mockBranch);
     mockBooking1.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
-    mockBooking1.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("23/04/2026 14:30"));
+    mockBooking1.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " + "23:30"));
 
     mockBookingService1 = new BookingService();
     mockBookingService1.setId(6L);
@@ -184,7 +197,7 @@ public class BookingControllerTest {
     mockBooking2.setCustomerInfo("{" + "  \"email\" : \"22110316@student.hcmute.edu.vn\" }");
     mockBooking2.setBranch(mockBranch);
     mockBooking2.setStatus(BarberConstant.BOOKING_STATUS_PENDING);
-    mockBooking2.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("24/04/2026 10:30"));
+    mockBooking2.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " + "23:30"));
 
     mockBookingService3 = new BookingService();
     mockBookingService3.setId(9L);
@@ -216,6 +229,8 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get list booking success")
     void testGetListBooking_ValidCriteria_ShouldSuccess() throws ParseException {
+      LocalDate today = LocalDate.now().plusDays(1);
+      String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       Pageable pageable = PageRequest.of(0, 10);
       List<Booking> bookingList = Collections.singletonList(mockBooking1);
       Page<Booking> bookingPage = new PageImpl<>(bookingList, pageable, 1);
@@ -224,7 +239,7 @@ public class BookingControllerTest {
       bookingAdminDto.setId(5L);
       bookingAdminDto.setDiscount(10.0);
       bookingAdminDto.setTotalPrice(161820.0);
-      bookingAdminDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("23/04/2026 14:30"));
+      bookingAdminDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " +"23:30"));
       bookingAdminDto.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
       bookingAdminDto.setCustomerInfo(null);
 
@@ -288,11 +303,13 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get detail booking success")
     void testGetDetail_ExistingId_ShouldSuccess() throws ParseException {
+      LocalDate today = LocalDate.now().plusDays(1);
+      String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       BookingAdminDto bookingAdminDto = new BookingAdminDto();
       bookingAdminDto.setId(5L);
       bookingAdminDto.setDiscount(10.0);
       bookingAdminDto.setTotalPrice(161820.0);
-      bookingAdminDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("23/04/2026 14:30"));
+      bookingAdminDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " + "23:30"));
       bookingAdminDto.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
       bookingAdminDto.setCustomerInfo(null);
 
@@ -314,8 +331,31 @@ public class BookingControllerTest {
       branchDto.setName("Barber - 123 Nguyễn Đình Chiểu");
       bookingAdminDto.setBranch(branchDto);
 
+      BookingServiceAdminDto bookingServiceAdminDto = new BookingServiceAdminDto();
+      bookingServiceAdminDto.setId(6L);
+      bookingServiceAdminDto.setServiceId(3L);
+      bookingServiceAdminDto.setPrice(109800.0);
+
+      ServiceInfoDto serviceInfoDto = new ServiceInfoDto();
+      serviceInfoDto.setName("Cắt gội");
+      serviceInfoDto.setPrice(122000.0);
+      serviceInfoDto.setSaleOff(10.0);
+      bookingServiceAdminDto.setServiceInfo(serviceInfoDto);
+
+      ResponseListDto<List<BookingServiceAdminDto>> responseListDto = new ResponseListDto<>();
+      responseListDto.setContent(List.of(bookingServiceAdminDto));
+      bookingAdminDto.setBookingServices(responseListDto);
+
       when(bookingRepository.findById(5L)).thenReturn(Optional.of(mockBooking1));
       when(bookingMapper.fromEntityToBookingAdminDto(mockBooking1)).thenReturn(bookingAdminDto);
+
+      Pageable pageable = PageRequest.of(0, 10);
+      List<BookingService> bookingServiceList = Collections.singletonList(mockBookingService1);
+      Page<BookingService> bookingServicePage = new PageImpl<>(bookingServiceList, pageable, 1);
+
+      when(bookingServiceRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(bookingServicePage);
+      List<BookingServiceAdminDto> dtoList = Collections.singletonList(bookingServiceAdminDto);
+      when(bookingServiceMapper.fromEntityToBookingServiceAdminDtoList(bookingServiceList)).thenReturn(dtoList);
 
       ApiMessageDto<BookingAdminDto> response = bookingController.getByAdmin(5L);
       BookingAdminDto responseDto = response.getData();
@@ -324,9 +364,12 @@ public class BookingControllerTest {
       assertEquals(mockBooking1.getTotalPrice(), responseDto.getTotalPrice());
       assertEquals(mockBooking1.getBookingDate(), responseDto.getBookingDate());
       assertEquals(mockBooking1.getStatus(), responseDto.getStatus());
+      assertEquals(mockBookingService1.getServiceId(), responseDto.getBookingServices().getContent().get(0).getServiceId());
 
       verify(bookingRepository, times(1)).findById(5L);
       verify(bookingMapper, times(1)).fromEntityToBookingAdminDto(eq(mockBooking1));
+      verify(bookingServiceRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
+      verify(bookingServiceMapper, times(1)).fromEntityToBookingServiceAdminDtoList(bookingServiceList);
     }
 
     @Test
@@ -406,8 +449,11 @@ public class BookingControllerTest {
     void testCreateBooking_ValidForm_CustomerLoggedIn_ShouldSuccess() throws ParseException {
       CreateBookingForm createBookingForm = new CreateBookingForm();
       createBookingForm.setDiscount(10.0);
-      createBookingForm.setDay("25/04/2026");
-      createBookingForm.setTime("14:30");
+
+      LocalDate today = LocalDate.now().plusDays(1);
+      createBookingForm.setDay(today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+      createBookingForm.setTime("23:30");
       createBookingForm.setBranchId(2L);
       createBookingForm.setServiceIds(List.of(3L, 4L));
 
@@ -481,8 +527,11 @@ public class BookingControllerTest {
       CreateBookingForm createBookingForm = new CreateBookingForm();
       createBookingForm.setCustomerInfo(customerInfoForm);
       createBookingForm.setDiscount(10.0);
-      createBookingForm.setDay("25/04/2026");
-      createBookingForm.setTime("11:30");
+
+      LocalDate today = LocalDate.now().plusDays(1);
+      createBookingForm.setDay(today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+
+      createBookingForm.setTime("23:30");
       createBookingForm.setBranchId(2L);
       createBookingForm.setServiceIds(List.of(3L, 4L));
 
@@ -620,6 +669,87 @@ public class BookingControllerTest {
     }
 
     @Test
+    @DisplayName("Create booking fail when booking time is in the past")
+    void testCreateBooking_PastDate_ShouldFail() {
+      CreateBookingForm createBookingForm = new CreateBookingForm();
+      createBookingForm.setDay("20/04/2020");
+      createBookingForm.setTime("10:00");
+      createBookingForm.setBranchId(2L);
+      createBookingForm.setServiceIds(List.of(3L, 4L));
+
+      when(branchRepository.findById(createBookingForm.getBranchId())).thenReturn(Optional.of(mockBranch));
+      when(serviceRepository.findByIdIn(createBookingForm.getServiceIds())).thenReturn(List.of(mockService1, mockService2));
+
+      assertThrows(BadRequestException.class, () -> bookingController.clientCreate(createBookingForm, bindingResult));
+
+      verify(branchRepository, times(1)).findById(createBookingForm.getBranchId());
+      verify(serviceRepository, times(1)).findByIdIn(createBookingForm.getServiceIds());
+      verify(bookingRepository, never()).existsByCustomerIdAndBookingDateAndStatusIn(any(), any(), anyList());
+      verify(bookingRepository, never()).existsByEmailAndBookingDateAndStatus(any(), any(), anyList());
+      verify(customerRepository, never()).findById(any());
+      verify(bookingRepository, never()).save(any());
+      verify(bookingServiceRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Create booking fail when booking already exists: customer logged in")
+    void testCreateBooking_ExistBooking_CustomerLoggedIn_ShouldFail() throws ParseException {
+      CreateBookingForm createBookingForm = new CreateBookingForm();
+      createBookingForm.setDiscount(10.0);
+      createBookingForm.setDay("28/04/2026");
+      createBookingForm.setTime("14:30");
+      createBookingForm.setBranchId(2L);
+      createBookingForm.setServiceIds(List.of(3L, 4L));
+
+      Date bookingDate = new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(createBookingForm.getDay() + " " + createBookingForm.getTime());
+
+      when(branchRepository.findById(createBookingForm.getBranchId())).thenReturn(Optional.of(mockBranch));
+      when(serviceRepository.findByIdIn(createBookingForm.getServiceIds())).thenReturn(List.of(mockService1, mockService2));
+      when(bookingRepository.existsByCustomerIdAndBookingDateAndStatusIn(customerJwt.getAccountId(), bookingDate, BarberConstant.CHECK_BOOKING_STATUS)).thenReturn(true);
+
+      assertThrows(BadRequestException.class, () -> bookingController.clientCreate(createBookingForm, bindingResult));
+
+      verify(branchRepository, times(1)).findById(createBookingForm.getBranchId());
+      verify(serviceRepository, times(1)).findByIdIn(createBookingForm.getServiceIds());
+      verify(bookingRepository, times(1)).existsByCustomerIdAndBookingDateAndStatusIn(customerJwt.getAccountId(), bookingDate, BarberConstant.CHECK_BOOKING_STATUS);
+      verify(customerRepository, never()).findById(any());
+      verify(bookingRepository, never()).existsByEmailAndBookingDateAndStatus(any(), any(), anyList());
+      verify(bookingRepository, never()).save(any());
+      verify(bookingServiceRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Create booking fail when booking already exists: customer not logged in")
+    void testCreateBooking_ExistBooking_Guest_ShouldFail() throws ParseException {
+      BookingCustomerInfoForm customerInfo = new BookingCustomerInfoForm();
+      customerInfo.setEmail("test@gmail.com");
+
+      CreateBookingForm createBookingForm = new CreateBookingForm();
+      createBookingForm.setCustomerInfo(customerInfo);
+      createBookingForm.setDay("28/04/2026");
+      createBookingForm.setTime("10:00");
+      createBookingForm.setBranchId(2L);
+      createBookingForm.setServiceIds(List.of(3L, 4L));
+
+      Date bookingDate = new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(createBookingForm.getDay() + " " + createBookingForm.getTime());
+
+      when(userService.getAddInfoFromToken()).thenReturn(null);
+      when(branchRepository.findById(createBookingForm.getBranchId())).thenReturn(Optional.of(mockBranch));
+      when(serviceRepository.findByIdIn(createBookingForm.getServiceIds())).thenReturn(List.of(mockService1, mockService2));
+      when(bookingRepository.existsByEmailAndBookingDateAndStatus(customerInfo.getEmail(), bookingDate, BarberConstant.CHECK_BOOKING_STATUS)).thenReturn(1);
+
+      assertThrows(BadRequestException.class, () -> bookingController.clientCreate(createBookingForm, bindingResult));
+
+      verify(branchRepository, times(1)).findById(createBookingForm.getBranchId());
+      verify(serviceRepository, times(1)).findByIdIn(createBookingForm.getServiceIds());
+      verify(bookingRepository, never()).existsByCustomerIdAndBookingDateAndStatusIn(any(), any(), anyList());
+      verify(bookingRepository, times(1)).existsByEmailAndBookingDateAndStatus(customerInfo.getEmail(), bookingDate, BarberConstant.CHECK_BOOKING_STATUS);
+      verify(customerRepository, never()).findById(any());
+      verify(bookingRepository, never()).save(any());
+      verify(bookingServiceRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("Cancel booking success: customer logged in")
     void testCancelBooking_ValidForm_CustomerLoggedId_ShouldSuccess() {
       CancelBookingForm cancelBookingForm = new CancelBookingForm();
@@ -711,6 +841,8 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get list booking success: customer logged in")
     void testGetListBooking_CustomerLoggedIn_ShouldSuccess() throws ParseException {
+      LocalDate today = LocalDate.now().plusDays(1);
+      String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       Pageable pageable = PageRequest.of(0, 10);
       List<Booking> bookingList = Collections.singletonList(mockBooking1);
       Page<Booking> bookingPage = new PageImpl<>(bookingList, pageable, 1);
@@ -719,7 +851,7 @@ public class BookingControllerTest {
       bookingDto.setId(5L);
       bookingDto.setDiscount(10.0);
       bookingDto.setTotalPrice(161820.0);
-      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("23/04/2026 14:30"));
+      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " +"23:30"));
       bookingDto.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
       bookingDto.setCustomerInfo(null);
 
@@ -764,6 +896,8 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get list booking success: customer not logged in")
     void testGetListBooking_CustomerNotLoggedIn_ShouldSuccess() throws ParseException {
+      LocalDate today = LocalDate.now().plusDays(1);
+      String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       Pageable pageable = PageRequest.of(0, 10);
       List<Booking> bookingList = Collections.singletonList(mockBooking2);
       Page<Booking> bookingPage = new PageImpl<>(bookingList, pageable, 1);
@@ -772,7 +906,7 @@ public class BookingControllerTest {
       bookingDto.setId(8L);
       bookingDto.setDiscount(10.0);
       bookingDto.setTotalPrice(161820.0);
-      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("24/04/2026 10:30"));
+      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " + "23:30"));
       bookingDto.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
 
       BranchDto branchDto = new BranchDto();
@@ -811,11 +945,13 @@ public class BookingControllerTest {
     @Test
     @DisplayName("Get detail booking success: customer logged in")
     void testGetDetailBooking_CustomerLoggedIn_ShouldSuccess() throws ParseException {
+      LocalDate today = LocalDate.now().plusDays(1);
+      String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       BookingDto bookingDto = new BookingDto();
       bookingDto.setId(5L);
       bookingDto.setDiscount(10.0);
       bookingDto.setTotalPrice(161820.0);
-      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("23/04/2026 14:30"));
+      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " +"23:30"));
       bookingDto.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
       bookingDto.setCustomerInfo(null);
 
@@ -834,9 +970,31 @@ public class BookingControllerTest {
       branchDto.setName("Barber - 123 Nguyễn Đình Chiểu");
       bookingDto.setBranch(branchDto);
 
+      BookingServiceDto bookingServiceDto = new BookingServiceDto();
+      bookingServiceDto.setId(6L);
+      bookingServiceDto.setServiceId(3L);
+      bookingServiceDto.setPrice(109800.0);
+
+      ServiceInfoDto serviceInfoDto = new ServiceInfoDto();
+      serviceInfoDto.setName("Cắt gội");
+      serviceInfoDto.setPrice(122000.0);
+      serviceInfoDto.setSaleOff(10.0);
+      bookingServiceDto.setServiceInfo(serviceInfoDto);
+
+      ResponseListDto<List<BookingServiceDto>> responseListDto = new ResponseListDto<>();
+      responseListDto.setContent(List.of(bookingServiceDto));
+      bookingDto.setBookingServices(responseListDto);
 
       when(bookingRepository.findById(5L)).thenReturn(Optional.of(mockBooking1));
       when(bookingMapper.fromEntityToBookingDto(mockBooking1)).thenReturn(bookingDto);
+
+      Pageable pageable = PageRequest.of(0, 10);
+      List<BookingService> bookingServiceList = Collections.singletonList(mockBookingService1);
+      Page<BookingService> bookingServicePage = new PageImpl<>(bookingServiceList, pageable, 1);
+
+      when(bookingServiceRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(bookingServicePage);
+      List<BookingServiceDto> dtoList = Collections.singletonList(bookingServiceDto);
+      when(bookingServiceMapper.fromEntityToBookingServiceDtoList(bookingServiceList)).thenReturn(dtoList);
 
       ApiMessageDto<BookingDto> response = bookingController.getByClient(5L);
       BookingDto result = response.getData();
@@ -844,19 +1002,24 @@ public class BookingControllerTest {
       assertEquals(mockBooking1.getId(), result.getId());
       assertEquals(mockBooking1.getBookingDate(), result.getBookingDate());
       assertEquals(mockBooking1.getTotalPrice(), result.getTotalPrice());
+      assertEquals(mockBookingService1.getServiceId(), result.getBookingServices().getContent().get(0).getServiceId());
 
       verify(bookingRepository, times(1)).findById(5L);
       verify(bookingMapper, times(1)).fromEntityToBookingDto(mockBooking1);
+      verify(bookingServiceRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
+      verify(bookingServiceMapper, times(1)).fromEntityToBookingServiceDtoList(bookingServiceList);
     }
 
     @Test
     @DisplayName("Get detail booking success: customer not logged in")
     void testGetDetailBooking_CustomerNotLoggedIn_ShouldSuccess() throws ParseException {
+      LocalDate today = LocalDate.now().plusDays(1);
+      String day = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
       BookingDto bookingDto = new BookingDto();
       bookingDto.setId(8L);
       bookingDto.setDiscount(10.0);
       bookingDto.setTotalPrice(70000.0);
-      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse("24/04/2026 10:30"));
+      bookingDto.setBookingDate(new SimpleDateFormat("dd/MM/yyyy HH:mm").parse(day + " " + "23:30"));
       bookingDto.setStatus(BarberConstant.BOOKING_STATUS_PENDING);
       bookingDto.setCustomer(null);
 
@@ -870,17 +1033,43 @@ public class BookingControllerTest {
       customerInfoDto.setEmail("22110316@student.hcmute.edu.vn");
       bookingDto.setCustomerInfo(customerInfoDto);
 
+      BookingServiceDto bookingServiceDto = new BookingServiceDto();
+      bookingServiceDto.setId(9L);
+      bookingServiceDto.setServiceId(3L);
+      bookingServiceDto.setPrice(109800.0);
+
+      ServiceInfoDto serviceInfoDto = new ServiceInfoDto();
+      serviceInfoDto.setName("Cắt gội");
+      serviceInfoDto.setPrice(122000.0);
+      serviceInfoDto.setSaleOff(10.0);
+      bookingServiceDto.setServiceInfo(serviceInfoDto);
+
+      ResponseListDto<List<BookingServiceDto>> responseListDto = new ResponseListDto<>();
+      responseListDto.setContent(List.of(bookingServiceDto));
+      bookingDto.setBookingServices(responseListDto);
+
       when(bookingRepository.findById(8L)).thenReturn(Optional.of(mockBooking2));
       when(bookingMapper.fromEntityToBookingDto(mockBooking2)).thenReturn(bookingDto);
+
+      Pageable pageable = PageRequest.of(0, 10);
+      List<BookingService> bookingServiceList = Collections.singletonList(mockBookingService3);
+      Page<BookingService> bookingServicePage = new PageImpl<>(bookingServiceList, pageable, 1);
+
+      when(bookingServiceRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(bookingServicePage);
+      List<BookingServiceDto> dtoList = Collections.singletonList(bookingServiceDto);
+      when(bookingServiceMapper.fromEntityToBookingServiceDtoList(bookingServiceList)).thenReturn(dtoList);
 
       ApiMessageDto<BookingDto> response = bookingController.getByClient(8L);
       BookingDto result = response.getData();
 
       assertEquals(mockBooking2.getId(), result.getId());
       assertEquals(mockBooking2.getBookingDate(), result.getBookingDate());
+      assertEquals(mockBookingService3.getServiceId(), result.getBookingServices().getContent().get(0).getServiceId());
 
       verify(bookingRepository, times(1)).findById(8L);
       verify(bookingMapper, times(1)).fromEntityToBookingDto(mockBooking2);
+      verify(bookingServiceRepository, times(1)).findAll(any(Specification.class), any(Pageable.class));
+      verify(bookingServiceMapper, times(1)).fromEntityToBookingServiceDtoList(bookingServiceList);
     }
 
     @Test

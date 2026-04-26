@@ -10,7 +10,7 @@
             </encoder>
         </appender>
         <logger name="org.springframework" level="INFO"/>
-        <logger name="com.tenant" level="DEBUG"/>
+        <logger name="com.barber.api" level="DEBUG"/>
         <root level="DEBUG">
             <appender-ref ref="STDOUT"/>
         </root>
@@ -37,7 +37,7 @@
             </encoder>
         </appender>
         <logger name="org.springframework" level="INFO"/>
-        <logger name="com.tenant" level="INFO"/>
+        <logger name="com.barber.api" level="INFO"/>
         <root level="ERROR">
             <appender-ref ref="FILE-ROLLING"/>
         </root>

@@ -1,5 +1,6 @@
 package com.barber.api.dto.account;
 
+import com.barber.api.dto.ABasicAdminDto;
 import com.barber.api.dto.group.GroupDto;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -7,9 +8,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class AccountDto {
-    @ApiModelProperty(name = "id")
-    private Long id;
+public class AccountDto extends ABasicAdminDto {
     @ApiModelProperty(name = "kind")
     private int kind;
     @ApiModelProperty(name = "username")

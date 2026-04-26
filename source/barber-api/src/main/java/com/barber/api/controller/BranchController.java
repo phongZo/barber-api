@@ -15,9 +15,9 @@ import com.barber.api.mapper.BranchMapper;
 import com.barber.api.model.Branch;
 import com.barber.api.model.Nation;
 import com.barber.api.model.criteria.BranchCriteria;
+import com.barber.api.repository.BookingRepository;
 import com.barber.api.repository.BranchRepository;
 import com.barber.api.repository.NationRepository;
-import com.barber.api.utils.JsonUtils;
 import java.util.List;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +49,9 @@ public class BranchController extends ABasicController{
   NationRepository nationRepository;
 
   @Autowired
+  BookingRepository bookingRepository;
+
+  @Autowired
   BranchMapper branchMapper;
 
   @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -72,7 +75,6 @@ public class BranchController extends ABasicController{
     branch.setWard(address[2]);
     branch.setDistrict(address[1]);
     branch.setProvince(address[0]);
-    branch.setSetting(JsonUtils.convertJsonToString(createBranchForm.getSetting()));
     branchRepository.save(branch);
 
     apiMessageDto.setMessage("Create branch success");
@@ -168,7 +170,6 @@ public class BranchController extends ABasicController{
       branch.setWard(validatedAddress[2]);
     }
     branchMapper.fromUpdateBranchFormToEntity(updateBranchForm, branch);
-    branch.setSetting(JsonUtils.convertJsonToString(updateBranchForm.getSetting()));
     branchRepository.save(branch);
     apiMessageDto.setMessage("Update branch success");
     return apiMessageDto;
@@ -183,7 +184,13 @@ public class BranchController extends ABasicController{
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Branch branch = branchRepository.findById(id)
             .orElseThrow(() -> new NotFoundException("Branch not found", ErrorCode.BRANCH_ERROR_NOT_FOUND));
-    branchRepository.delete(branch);
+    Boolean existBooking = bookingRepository.existsByBranchId(id);
+    if (existBooking){
+      branch.setStatus(BarberConstant.BRANCH_STATUS_INACTIVE);
+      branchRepository.save(branch);
+    } else {
+      branchRepository.delete(branch);
+    }
     apiMessageDto.setMessage("Delete branch success");
     return apiMessageDto;
   }

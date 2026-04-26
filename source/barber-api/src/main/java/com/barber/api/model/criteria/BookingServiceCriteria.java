@@ -16,7 +16,6 @@ import org.springframework.data.jpa.domain.Specification;
 @Data
 public class BookingServiceCriteria {
   private static final long serialVersionUID = 1L;
-  private Long id;
   private Long bookingId;
   private Long customerId;
   private String email;
@@ -28,11 +27,6 @@ public class BookingServiceCriteria {
       @Override
       public Predicate toPredicate(Root<BookingService> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
         List<Predicate> predicates = new ArrayList<>();
-
-        if (getId() != null) {
-          predicates.add(cb.equal(root.get("id"), getId()));
-        }
-
         if (getBookingId() != null){
           predicates.add(cb.equal(root.get("booking").get("id"), getBookingId()));
         }

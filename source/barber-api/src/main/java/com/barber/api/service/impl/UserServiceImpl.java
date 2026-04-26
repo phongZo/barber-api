@@ -56,8 +56,8 @@ public class UserServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("Invalid username or password.");
         }
         boolean enabled = true;
-        if (user.getStatus() != 1) {
-            log.error("User had been locked");
+        if (Objects.equals(user.getStatus(), BarberConstant.STATUS_LOCK) || Objects.equals(user.getStatus(), BarberConstant.STATUS_DELETE)) {
+            log.error("User had been locked or deleted");
             enabled = false;
         }
         Set<GrantedAuthority> grantedAuthorities = getAccountPermission(user);
@@ -111,8 +111,8 @@ public class UserServiceImpl implements UserDetailsService {
         }
 
         boolean enabled = true;
-        if (user.getStatus() != 1) {
-            log.error("User had been locked");
+        if (Objects.equals(user.getStatus(), BarberConstant.STATUS_LOCK) || Objects.equals(user.getStatus(), BarberConstant.STATUS_DELETE)) {
+            log.error("User had been locked or deleted");
             enabled = false;
         }
 

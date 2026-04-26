@@ -15,14 +15,12 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE,
-    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
-    uses = {BookingMapper.class})
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface BookingServiceMapper {
   @Mapping(source = "id", target = "id")
   @Mapping(source = "serviceId", target = "serviceId")
   @Mapping(source = "price", target = "price")
   @Mapping(source = "serviceInfo", target = "serviceInfo", qualifiedByName = "fromEntityToServiceInfoDto")
-  @Mapping(source = "booking", target = "booking", qualifiedByName = "fromEntityToBookingAdminDto")
   @BeanMapping(ignoreByDefault = true)
   @Named("fromEntityToBookingServiceAdminDto")
   BookingServiceAdminDto fromEntityToBookingServiceAdminDto(BookingService bookingService);
@@ -34,7 +32,6 @@ public interface BookingServiceMapper {
   @Mapping(source = "serviceId", target = "serviceId")
   @Mapping(source = "price", target = "price")
   @Mapping(source = "serviceInfo", target = "serviceInfo", qualifiedByName = "fromEntityToServiceInfoDto")
-  @Mapping(source = "booking", target = "booking", qualifiedByName = "fromEntityToBookingDto")
   @BeanMapping(ignoreByDefault = true)
   @Named("fromEntityToBookingServiceDto")
   BookingServiceDto fromEntityToBookingServiceDto(BookingService bookingService);
