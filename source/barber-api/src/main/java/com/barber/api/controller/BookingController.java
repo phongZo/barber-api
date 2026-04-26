@@ -121,7 +121,6 @@ public class BookingController extends ABasicController{
     if (vnDateTime.isBefore(now)) {
       throw new BadRequestException("Booking date cannot be in the past", ErrorCode.BOOKING_ERROR_INVALID_TIME);
     }
-
     Date bookingDate = Date.from(vnDateTime.toInstant());
 
     Boolean existBooking = (customerId != null)
@@ -143,7 +142,7 @@ public class BookingController extends ABasicController{
       Customer customer = customerRepository.findById(customerId)
           .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
       booking.setCustomer(customer);
-      booking.setStatus(BarberConstant.BOOKING_CASE_STATUS_BOOKING);
+      booking.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
     } else if (StringUtils.isNotEmpty(email)) {
       booking.setCustomerInfo(JsonUtils.convertJsonToString(createBookingForm.getCustomerInfo()));
       booking.setStatus(BarberConstant.BOOKING_STATUS_PENDING);
@@ -187,7 +186,6 @@ public class BookingController extends ABasicController{
 
     booking.setTotalPrice(totalPrice);
     bookingRepository.save(booking);
-
     apiMessageDto.setMessage(isGuest ? "Check email to confirm booking" : "Create booking success");
     return apiMessageDto;
   }
@@ -230,16 +228,12 @@ public class BookingController extends ABasicController{
   @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BK_V')")
   public ApiMessageDto<BookingAdminDto> getByAdmin(@PathVariable("id") Long id) {
-
     if (!isAdmin()){
       throw new UnauthorizationException("User is not an admin");
     }
-
     ApiMessageDto<BookingAdminDto> apiMessageDto = new ApiMessageDto<>();
-
     Booking booking = bookingRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
-
     BookingAdminDto bookingAdminDto = bookingMapper.fromEntityToBookingAdminDto(booking);
 
     BookingServiceCriteria bookingServiceCriteria = new BookingServiceCriteria();
@@ -254,7 +248,6 @@ public class BookingController extends ABasicController{
     }
 
     Pageable pageable = PageRequest.of(0, 10);
-
     Page<BookingService> bookingServices =
         bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
 
@@ -268,18 +261,14 @@ public class BookingController extends ABasicController{
     bookingAdminDto.setBookingServices(responseListDto);
     apiMessageDto.setData(bookingAdminDto);
     apiMessageDto.setMessage("Get detail booking success");
-
     return apiMessageDto;
   }
 
   @GetMapping(value = "/client-get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   public ApiMessageDto<BookingDto> getByClient(@PathVariable("id") Long id) {
-
     ApiMessageDto<BookingDto> apiMessageDto = new ApiMessageDto<>();
-
     Booking booking = bookingRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
-
     BookingServiceCriteria bookingServiceCriteria = new BookingServiceCriteria();
     bookingServiceCriteria.setBookingId(id);
 
@@ -292,25 +281,20 @@ public class BookingController extends ABasicController{
     }
 
     Pageable pageable = PageRequest.of(0, 10);
-
     Page<BookingService> bookingServices =
         bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
 
     ResponseListDto<List<BookingServiceDto>> responseListDto = new ResponseListDto<>();
-
     List<BookingServiceDto> bookingServiceDtos =
         bookingServiceMapper.fromEntityToBookingServiceDtoList(bookingServices.getContent());
-
     responseListDto.setContent(bookingServiceDtos);
     responseListDto.setTotalElements(bookingServices.getTotalElements());
     responseListDto.setTotalPages(bookingServices.getTotalPages());
 
     BookingDto bookingDto = bookingMapper.fromEntityToBookingDto(booking);
     bookingDto.setBookingServices(responseListDto);
-
     apiMessageDto.setData(bookingDto);
     apiMessageDto.setMessage("Get detail booking success");
-
     return apiMessageDto;
   }
 
@@ -330,18 +314,15 @@ public class BookingController extends ABasicController{
           throw new BadRequestException("Invalid status transition", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
         }
         break;
-
       case BarberConstant.BOOKING_CASE_STATUS_BOOKING:
         if (!updateStatusBookingForm.getStatus().equals(BarberConstant.BOOKING_STATUS_COMPLETED) &&
             !updateStatusBookingForm.getStatus().equals(BarberConstant.BOOKING_STATUS_CANCELED)) {
           throw new BadRequestException("Invalid status transition", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
         }
         break;
-
       case BarberConstant.BOOKING_CASE_STATUS_COMPLETED:
       case BarberConstant.BOOKING_CASE_STATUS_CANCELED:
         throw new BadRequestException("Invalid status transition", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
-
       default:
         throw new BadRequestException("Unknown status", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
     }
@@ -365,7 +346,6 @@ public class BookingController extends ABasicController{
       bookingRepository.save(booking);
     } else if (StringUtils.isNotEmpty(cancelBookingForm.getEmail())){
       BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
-
       if (!cancelBookingForm.getEmail().equals(info.getEmail())){
         throw new UnauthorizationException("Cannot cancel booking");
       }
@@ -375,7 +355,6 @@ public class BookingController extends ABasicController{
           booking.getId(),
           BarberConstant.BOOKING_ACTION_CANCEL
       );
-
       sendConfirmCancelEmail(info.getEmail(), token);
     } else{
       throw new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND);
@@ -388,14 +367,11 @@ public class BookingController extends ABasicController{
   @PutMapping("/confirm-create")
   public ApiMessageDto<String> confirmCreate(@Valid @RequestBody BookingTokenRequestForm bookingTokenRequestForm, BindingResult bindingResult) {
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
-
     Map<String, Object> data = BookingTokenUtils.parseToken(bookingTokenRequestForm.getToken());
-
     Long bookingId = ConvertUtils.convertStringToLong(data.get("bookingId").toString());
     String email = data.get("email").toString();
     String action = data.get("action").toString();
     Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
-
     Booking booking = bookingRepository.findById(bookingId)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
 
@@ -417,7 +393,6 @@ public class BookingController extends ABasicController{
 
     booking.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
     bookingRepository.save(booking);
-
     apiMessageDto.setMessage("Booking confirmed");
     return apiMessageDto;
   }
@@ -426,12 +401,10 @@ public class BookingController extends ABasicController{
   public ApiMessageDto<String> confirmCancel(@Valid @RequestBody BookingTokenRequestForm bookingTokenRequestForm, BindingResult bindingResult) {
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Map<String, Object> data = BookingTokenUtils.parseToken(bookingTokenRequestForm.getToken());
-
     Long bookingId = ConvertUtils.convertStringToLong(data.get("bookingId").toString());
     String email = data.get("email").toString();
     String action = data.get("action").toString();
     Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
-
     Booking booking = bookingRepository.findById(bookingId)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
 
@@ -451,7 +424,6 @@ public class BookingController extends ABasicController{
 
     booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
     bookingRepository.save(booking);
-
     apiMessageDto.setMessage("Booking canceled");
     return apiMessageDto;
   }
