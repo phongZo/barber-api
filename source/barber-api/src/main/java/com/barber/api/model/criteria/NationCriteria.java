@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import lombok.Data;
@@ -17,6 +19,7 @@ public class NationCriteria {
   private Long id;
   private String name;
   private Integer kind;
+  private Long parentId;
 
   public Specification<Nation> getSpecification() {
     return new Specification<Nation>() {
@@ -36,6 +39,10 @@ public class NationCriteria {
 
         if (!StringUtils.isEmpty(getName())) {
           predicates.add(cb.like(cb.lower(root.get("name")), "%" + getName().toLowerCase() + "%"));
+        }
+
+        if (getParentId() != null){
+          predicates.add(cb.equal(root.get("parent").get("id"), getParentId()));
         }
         return cb.and(predicates.toArray(new Predicate[predicates.size()]));
       }

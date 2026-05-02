@@ -210,7 +210,7 @@ public class CategoryController extends ABasicController{
     ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
     Category category = categoryRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Category not found", ErrorCode.CATEGORY_ERROR_NOT_FOUND));
-    Long oldParentId = category.getParent().getId() != null ? category.getParent().getId() : null;
+    Long oldParentId = category.getParent() != null ? category.getParent().getId() : null;
     serviceRepository.setNullByCategoryId(id);
     categoryRepository.setNullChildrenByParentId(id);
     categoryRepository.decreaseOrderAfterRemove(category.getKind(), oldParentId, category.getOrderInParent());

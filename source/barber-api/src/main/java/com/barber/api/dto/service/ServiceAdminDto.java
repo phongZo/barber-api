@@ -20,4 +20,5 @@ public class ServiceAdminDto extends ABasicAdminDto {
   private CategoryAdminDto category;
   private List<ServiceCategoryOptionDto> optionList;
   private List<ServiceServiceStepDto> serviceStepList;
+  private ServiceAdminDto parent;
 }

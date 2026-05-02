@@ -20,4 +20,5 @@ public class ServiceDto{
   private CategoryDto category;
   private List<ServiceCategoryOptionDto> optionList;
   private List<ServiceServiceStepDto> serviceStepList;
+  private ServiceDto parent;
 }

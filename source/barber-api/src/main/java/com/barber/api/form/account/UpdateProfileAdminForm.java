@@ -11,8 +11,7 @@ public class UpdateProfileAdminForm {
     private String phone;
     @ApiModelProperty(name = "password")
     private String password;
-    @NotEmpty(message = "oldPassword is required")
-    @ApiModelProperty(name = "oldPassword", required = true)
+    @ApiModelProperty(name = "oldPassword")
     private String oldPassword;
     @NotEmpty(message = "fullName is required")
     @ApiModelProperty(name = "fullName", required = true)
