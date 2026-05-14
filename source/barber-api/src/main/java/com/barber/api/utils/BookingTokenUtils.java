@@ -6,12 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BookingTokenUtils {
-  public static String generateToken(String email, Long bookingId, String action) {
+  public static String generateToken(String email, Long bookingId) {
     try {
       Map<String, Object> data = new HashMap<>();
       data.put("email", email);
       data.put("bookingId", bookingId);
-      data.put("action", action);
 
       long exp = System.currentTimeMillis() + (5 * 60 * 1000);
       data.put("exp", exp);

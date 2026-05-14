@@ -10,8 +10,8 @@ public class ErrorCode {
     public static final String ACCOUNT_ERROR_WRONG_PASSWORD = "ERROR-ACCOUNT-0003";
     public static final String ACCOUNT_ERROR_LOCKED = "ERROR-ACCOUNT-0004";
     public static final String ACCOUNT_ERROR_OPT_INVALID = "ERROR-ACCOUNT-0005";
-    public static final String ACCOUNT_ERROR_NOT_ALLOW_DELETE_SUPPER_ADMIN = "ERROR-ACCOUNT-006";
-    public static final String ACCOUNT_ERROR_INCORRECT_HASH_VERIFICATION = "ERROR-ACCOUNT-007";
+    public static final String ACCOUNT_ERROR_NOT_ALLOW_DELETE_SUPPER_ADMIN = "ERROR-ACCOUNT-0006";
+    public static final String ACCOUNT_ERROR_INCORRECT_HASH_VERIFICATION = "ERROR-ACCOUNT-0007";
     public static final String ACCOUNT_ERROR_VERIFY_FAILED = "ERROR-ACCOUNT-0008";
     public static final String ACCOUNT_ERROR_NOT_PENDING = "ERROR-ACCOUNT-0009";
 
