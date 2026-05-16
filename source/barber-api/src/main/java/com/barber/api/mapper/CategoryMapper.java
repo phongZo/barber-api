@@ -49,6 +49,8 @@ public interface CategoryMapper {
   @Mapping(source = "description", target = "description")
   @Mapping(source = "image", target = "image")
   @Mapping(source = "isSelected", target = "isSelected")
+  @Mapping(source = "kind", target = "kind")
+  @Mapping(source = "orderInParent", target = "orderInParent")
   @Mapping(source = "additionalInfo", target = "additionalInfoList", qualifiedByName = "fromEntityToCategoryAdditionalInfoDto")
   @Mapping(source = "parent", target = "parent", qualifiedByName = "fromEntityToCategoryDto")
   @BeanMapping(ignoreByDefault = true)

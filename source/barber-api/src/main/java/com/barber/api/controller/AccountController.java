@@ -176,38 +176,28 @@ public class AccountController extends ABasicController{
     @PutMapping(value = "/update-profile-admin", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ACC_UP_AD')")
     public ApiMessageDto<String> updateProfileAdmin(@Valid @RequestBody UpdateProfileAdminForm updateProfileAdminForm, BindingResult bindingResult) {
-
         ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
         Account account = accountRepository.findById(getCurrentUser())
             .orElseThrow(() -> new NotFoundException("Account not found", ErrorCode.ACCOUNT_ERROR_NOT_FOUND));
-
-        if(!passwordEncoder.matches(updateProfileAdminForm.getOldPassword(), account.getPassword())){
-            apiMessageDto.setResult(false);
-            apiMessageDto.setCode(ErrorCode.ACCOUNT_ERROR_WRONG_PASSWORD);
-            return apiMessageDto;
-        }
-
         if (StringUtils.isNoneBlank(updateProfileAdminForm.getPassword())) {
+            if(!passwordEncoder.matches(updateProfileAdminForm.getOldPassword(), account.getPassword())){
+                throw new BadRequestException("Old password invalid", ErrorCode.ACCOUNT_ERROR_WRONG_PASSWORD);
+            }
             account.setPassword(passwordEncoder.encode(updateProfileAdminForm.getPassword()));
         }
+
         account.setPhone(updateProfileAdminForm.getPhone());
         account.setFullName(updateProfileAdminForm.getFullName());
         account.setAvatarPath(updateProfileAdminForm.getAvatarPath());
-        if (updateProfileAdminForm.getGroupId() != null &&
-                !updateProfileAdminForm.getGroupId().equals(account.getGroup().getId())) {
-            Group group = groupRepository.findById(updateProfileAdminForm.getGroupId()).orElse(null);
-            if (group == null) {
-                apiMessageDto.setResult(false);
-                apiMessageDto.setCode(ErrorCode.ACCOUNT_ERROR_UNKNOWN);
-                return apiMessageDto;
-            }
+        if (updateProfileAdminForm.getGroupId() != null && !updateProfileAdminForm.getGroupId().equals(account.getGroup().getId())) {
+            Group group = groupRepository.findById(updateProfileAdminForm.getGroupId())
+                .orElseThrow(() -> new NotFoundException("Group not found", ErrorCode.GROUP_ERROR_NOT_FOUND));
             account.setGroup(group);
         }
-        accountRepository.save(account);
 
+        accountRepository.save(account);
         apiMessageDto.setMessage("Update admin account success");
         return apiMessageDto;
-
     }
 
     @GetMapping(value = "/list-admin", produces = MediaType.APPLICATION_JSON_VALUE)

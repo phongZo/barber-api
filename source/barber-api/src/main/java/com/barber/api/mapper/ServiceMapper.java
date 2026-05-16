@@ -49,6 +49,7 @@ public interface ServiceMapper {
   @Mapping(source = "category", target = "category", qualifiedByName = "fromEntityToCategoryAdminDto")
   @Mapping(source = "options", target = "optionList", qualifiedByName = "fromJsonToServiceCategoryOptionDto")
   @Mapping(source = "serviceStep", target = "serviceStepList", qualifiedByName = "fromJsonToServiceStepDto")
+  @Mapping(source = "parent", target = "parent", qualifiedByName = "fromEntityToServiceAdminDto")
   @BeanMapping(ignoreByDefault = true)
   @Named("fromEntityToServiceAdminDto")
   ServiceAdminDto fromEntityToServiceAdminDto(Service service);
@@ -70,6 +71,7 @@ public interface ServiceMapper {
   @Mapping(source = "category", target = "category", qualifiedByName = "fromEntityToCategoryAdminDto")
   @Mapping(source = "options", target = "optionList", qualifiedByName = "fromJsonToServiceCategoryOptionDto")
   @Mapping(source = "serviceStep", target = "serviceStepList", qualifiedByName = "fromJsonToServiceStepDto")
+  @Mapping(source = "parent", target = "parent", qualifiedByName = "fromEntityToServiceDto")
   @BeanMapping(ignoreByDefault = true)
   @Named("fromEntityToServiceDto")
   ServiceDto fromEntityToServiceDto(Service service);

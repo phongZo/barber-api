@@ -44,10 +44,6 @@ public class BarberConstant {
     public static final List<Integer> BOOKING_STATUS = List.of(BOOKING_STATUS_PENDING, BOOKING_STATUS_BOOKING, BOOKING_STATUS_COMPLETED, BOOKING_STATUS_CANCELED);
     public static final List<Integer> CHECK_BOOKING_STATUS = List.of(BOOKING_STATUS_PENDING, BOOKING_STATUS_BOOKING);
 
-
-    public static final String BOOKING_ACTION_CREATE = "CREATE";
-    public static final String BOOKING_ACTION_CANCEL = "CANCEL";
-
     public static final Integer BRANCH_STATUS_INACTIVE = -1;
 
     public static final Integer GROUP_KIND_ADMIN = 1;
@@ -64,7 +60,6 @@ public class BarberConstant {
     public static final String HOUR_PATTERN = "^([01][0-9]|2[0-3]):[0-5][0-9]$";
     public static final String DATE_PATTERN = "\\d{2}/\\d{2}/\\d{4}";
 
-    public static final Integer SLOT_INTERVAL = 20;
     public static final ZoneId VN_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private BarberConstant(){

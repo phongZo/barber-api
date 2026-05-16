@@ -12,8 +12,6 @@ import com.barber.api.dto.bookingService.BookingServiceDto;
 import com.barber.api.exception.BadRequestException;
 import com.barber.api.exception.NotFoundException;
 import com.barber.api.exception.UnauthorizationException;
-import com.barber.api.form.booking.BookingCustomerInfoForm;
-import com.barber.api.form.booking.BookingTokenRequestForm;
 import com.barber.api.form.booking.CancelBookingForm;
 import com.barber.api.form.booking.CreateBookingForm;
 import com.barber.api.form.booking.UpdateStatusBookingForm;
@@ -33,8 +31,6 @@ import com.barber.api.repository.BranchRepository;
 import com.barber.api.repository.CustomerRepository;
 import com.barber.api.repository.ServiceRepository;
 import com.barber.api.service.BarberApiService;
-import com.barber.api.utils.BookingTokenUtils;
-import com.barber.api.utils.ConvertUtils;
 import com.barber.api.utils.JsonUtils;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -42,7 +38,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -121,7 +116,6 @@ public class BookingController extends ABasicController{
     if (vnDateTime.isBefore(now)) {
       throw new BadRequestException("Booking date cannot be in the past", ErrorCode.BOOKING_ERROR_INVALID_TIME);
     }
-
     Date bookingDate = Date.from(vnDateTime.toInstant());
 
     Boolean existBooking = (customerId != null)
@@ -143,7 +137,7 @@ public class BookingController extends ABasicController{
       Customer customer = customerRepository.findById(customerId)
           .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
       booking.setCustomer(customer);
-      booking.setStatus(BarberConstant.BOOKING_CASE_STATUS_BOOKING);
+      booking.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
     } else if (StringUtils.isNotEmpty(email)) {
       booking.setCustomerInfo(JsonUtils.convertJsonToString(createBookingForm.getCustomerInfo()));
       booking.setStatus(BarberConstant.BOOKING_STATUS_PENDING);
@@ -152,12 +146,7 @@ public class BookingController extends ABasicController{
     bookingRepository.save(booking);
 
     if (isGuest) {
-      String token = BookingTokenUtils.generateToken(
-          createBookingForm.getCustomerInfo().getEmail(),
-          booking.getId(),
-          BarberConstant.BOOKING_ACTION_CREATE
-      );
-      sendConfirmCreateEmail(createBookingForm.getCustomerInfo().getEmail(), token);
+      sendSuccessBooking(createBookingForm.getCustomerInfo().getEmail());
     }
 
     double totalPrice = 0;
@@ -187,7 +176,6 @@ public class BookingController extends ABasicController{
 
     booking.setTotalPrice(totalPrice);
     bookingRepository.save(booking);
-
     apiMessageDto.setMessage(isGuest ? "Check email to confirm booking" : "Create booking success");
     return apiMessageDto;
   }
@@ -230,16 +218,12 @@ public class BookingController extends ABasicController{
   @GetMapping(value = "/get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('BK_V')")
   public ApiMessageDto<BookingAdminDto> getByAdmin(@PathVariable("id") Long id) {
-
     if (!isAdmin()){
       throw new UnauthorizationException("User is not an admin");
     }
-
     ApiMessageDto<BookingAdminDto> apiMessageDto = new ApiMessageDto<>();
-
     Booking booking = bookingRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
-
     BookingAdminDto bookingAdminDto = bookingMapper.fromEntityToBookingAdminDto(booking);
 
     BookingServiceCriteria bookingServiceCriteria = new BookingServiceCriteria();
@@ -254,7 +238,6 @@ public class BookingController extends ABasicController{
     }
 
     Pageable pageable = PageRequest.of(0, 10);
-
     Page<BookingService> bookingServices =
         bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
 
@@ -268,18 +251,14 @@ public class BookingController extends ABasicController{
     bookingAdminDto.setBookingServices(responseListDto);
     apiMessageDto.setData(bookingAdminDto);
     apiMessageDto.setMessage("Get detail booking success");
-
     return apiMessageDto;
   }
 
   @GetMapping(value = "/client-get/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
   public ApiMessageDto<BookingDto> getByClient(@PathVariable("id") Long id) {
-
     ApiMessageDto<BookingDto> apiMessageDto = new ApiMessageDto<>();
-
     Booking booking = bookingRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
-
     BookingServiceCriteria bookingServiceCriteria = new BookingServiceCriteria();
     bookingServiceCriteria.setBookingId(id);
 
@@ -292,25 +271,20 @@ public class BookingController extends ABasicController{
     }
 
     Pageable pageable = PageRequest.of(0, 10);
-
     Page<BookingService> bookingServices =
         bookingServiceRepository.findAll(bookingServiceCriteria.getSpecification(), pageable);
 
     ResponseListDto<List<BookingServiceDto>> responseListDto = new ResponseListDto<>();
-
     List<BookingServiceDto> bookingServiceDtos =
         bookingServiceMapper.fromEntityToBookingServiceDtoList(bookingServices.getContent());
-
     responseListDto.setContent(bookingServiceDtos);
     responseListDto.setTotalElements(bookingServices.getTotalElements());
     responseListDto.setTotalPages(bookingServices.getTotalPages());
 
     BookingDto bookingDto = bookingMapper.fromEntityToBookingDto(booking);
     bookingDto.setBookingServices(responseListDto);
-
     apiMessageDto.setData(bookingDto);
     apiMessageDto.setMessage("Get detail booking success");
-
     return apiMessageDto;
   }
 
@@ -326,22 +300,19 @@ public class BookingController extends ABasicController{
 
     switch (booking.getStatus()) {
       case BarberConstant.BOOKING_CASE_STATUS_PENDING:
-        if (!updateStatusBookingForm.getStatus().equals(BarberConstant.BOOKING_STATUS_BOOKING)) {
+        if (updateStatusBookingForm.getStatus().equals(BarberConstant.BOOKING_STATUS_COMPLETED)) {
           throw new BadRequestException("Invalid status transition", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
         }
         break;
-
       case BarberConstant.BOOKING_CASE_STATUS_BOOKING:
         if (!updateStatusBookingForm.getStatus().equals(BarberConstant.BOOKING_STATUS_COMPLETED) &&
             !updateStatusBookingForm.getStatus().equals(BarberConstant.BOOKING_STATUS_CANCELED)) {
           throw new BadRequestException("Invalid status transition", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
         }
         break;
-
       case BarberConstant.BOOKING_CASE_STATUS_COMPLETED:
       case BarberConstant.BOOKING_CASE_STATUS_CANCELED:
         throw new BadRequestException("Invalid status transition", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
-
       default:
         throw new BadRequestException("Unknown status", ErrorCode.BOOKING_ERROR_INVALID_STATUS);
     }
@@ -357,138 +328,59 @@ public class BookingController extends ABasicController{
     Booking booking = bookingRepository.findById(cancelBookingForm.getId())
         .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
 
-    Boolean isGuest = getCurrentUser() == null;
-    if (!isGuest){
-      Customer customer = customerRepository.findById(getCurrentUser())
-              .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
-      booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
-      bookingRepository.save(booking);
-    } else if (StringUtils.isNotEmpty(cancelBookingForm.getEmail())){
-      BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
-
-      if (!cancelBookingForm.getEmail().equals(info.getEmail())){
-        throw new UnauthorizationException("Cannot cancel booking");
-      }
-
-      String token = BookingTokenUtils.generateToken(
-          info.getEmail(),
-          booking.getId(),
-          BarberConstant.BOOKING_ACTION_CANCEL
-      );
-
-      sendConfirmCancelEmail(info.getEmail(), token);
-    } else{
-      throw new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND);
-    }
-
-    apiMessageDto.setMessage(isGuest ? "Check email to confirm cancel" : "Cancel booking success");
-    return apiMessageDto;
-  }
-
-  @PutMapping("/confirm-create")
-  public ApiMessageDto<String> confirmCreate(@Valid @RequestBody BookingTokenRequestForm bookingTokenRequestForm, BindingResult bindingResult) {
-    ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
-
-    Map<String, Object> data = BookingTokenUtils.parseToken(bookingTokenRequestForm.getToken());
-
-    Long bookingId = ConvertUtils.convertStringToLong(data.get("bookingId").toString());
-    String email = data.get("email").toString();
-    String action = data.get("action").toString();
-    Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
-
-    Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
-
-    if (!BarberConstant.BOOKING_ACTION_CREATE.equalsIgnoreCase(action)) {
-      throw new BadRequestException("Invalid action", ErrorCode.BOOKING_ERROR_INVALID_ACTION);
-    }
-
-    if (System.currentTimeMillis() > exp) {
-      booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
-      bookingRepository.save(booking);
-      throw new BadRequestException("Token expired", ErrorCode.BOOKING_ERROR_TOKEN_EXPIRED);
-    }
-
-    BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
-
-    if (!email.equals(info.getEmail())) {
-      throw new BadRequestException("Invalid email", ErrorCode.BOOKING_ERROR_INVALID_EMAIL);
-    }
-
-    booking.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
-    bookingRepository.save(booking);
-
-    apiMessageDto.setMessage("Booking confirmed");
-    return apiMessageDto;
-  }
-
-  @PutMapping("/confirm-cancel")
-  public ApiMessageDto<String> confirmCancel(@Valid @RequestBody BookingTokenRequestForm bookingTokenRequestForm, BindingResult bindingResult) {
-    ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
-    Map<String, Object> data = BookingTokenUtils.parseToken(bookingTokenRequestForm.getToken());
-
-    Long bookingId = ConvertUtils.convertStringToLong(data.get("bookingId").toString());
-    String email = data.get("email").toString();
-    String action = data.get("action").toString();
-    Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
-
-    Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
-
-    if (!BarberConstant.BOOKING_ACTION_CANCEL.equalsIgnoreCase(action)) {
-      throw new BadRequestException("Invalid action", ErrorCode.BOOKING_ERROR_INVALID_ACTION);
-    }
-
-    if (System.currentTimeMillis() > exp) {
-      throw new BadRequestException("Token expired", ErrorCode.BOOKING_ERROR_TOKEN_EXPIRED);
-    }
-
-    BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
-
-    if (!email.equals(info.getEmail())) {
-      throw new BadRequestException("Invalid email", ErrorCode.BOOKING_ERROR_INVALID_EMAIL);
-    }
-
+    Customer customer = customerRepository.findById(getCurrentUser())
+        .orElseThrow(() -> new NotFoundException("Customer not found", ErrorCode.CUSTOMER_ERROR_NOT_FOUND));
     booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
     bookingRepository.save(booking);
 
-    apiMessageDto.setMessage("Booking canceled");
+    apiMessageDto.setMessage("Cancel booking success");
     return apiMessageDto;
   }
 
-  private void sendConfirmCreateEmail(String email, String token){
-    String subject = "Xác nhận lịch đặt";
-    String link = "http://localhost:5173/confirm-create?token=" + token;
-    String html = "<div style=\"font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9;\">" +
-        "<h2 style=\"color: #2c3e50; text-align: center;\">Xác nhận lịch đặt</h2>" +
-        "<p style=\"font-size: 16px; line-height: 1.6;\">Bạn vừa thực hiện đặt lịch tại hệ thống.</p>" +
-        "<p style=\"font-size: 16px; line-height: 1.6;\">Vui lòng nhấn nút bên dưới để xác nhận lịch của bạn:</p>" +
-        "<div style=\"text-align: center; margin: 20px 0;\">" +
-        "<a href=\"" + link + "\" " +
-        "style=\"display: inline-block; padding: 12px 24px; font-size: 16px; color: #fff; background-color: #28a745; text-decoration: none; border-radius: 5px;\">" +
-        "Xác nhận đặt lịch</a>" +
-        "</div>" +
-        "<p style=\"font-size: 16px; line-height: 1.6; color: #555;\">Liên kết sẽ hết hạn trong <strong>15 phút</strong>.</p>" +
-        "<p style=\"font-size: 14px; color: #999; font-style: italic;\">Nếu bạn không thực hiện hành động này, vui lòng bỏ qua email.</p>" +
-        "</div>";
-    barberApiService.sendEmail(email, html, subject, true);
-  }
+  private void sendSuccessBooking(String email){
+    String subject = "LUXEBARBER - Đặt lịch thành công";
 
-  private void sendConfirmCancelEmail(String email, String token){
-    String subject = "Xác nhận hủy lịch";
-    String link = "http://localhost:5173/confirm-cancel?token=" + token;
-    String html = "<div style=\"font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9;\">" +
-        "<h2 style=\"color: #e74c3c; text-align: center;\">Xác nhận hủy lịch</h2>" +
-        "<p style=\"font-size: 16px; line-height: 1.6;\">Bạn đã yêu cầu hủy lịch đặt.</p>" +
-        "<p style=\"font-size: 16px; line-height: 1.6;\">Vui lòng nhấn nút bên dưới để xác nhận hủy lịch:</p>" +
-        "<div style=\"text-align: center; margin: 20px 0;\">" +
-        "<a href=\"" + link + "\" " +
-        "style=\"display: inline-block; padding: 12px 24px; font-size: 16px; color: #fff; background-color: #e74c3c; text-decoration: none; border-radius: 5px;\">" +
-        "Xác nhận hủy lịch</a>" +
-        "</div>" +
-        "<p style=\"font-size: 16px; line-height: 1.6; color: #555;\">Liên kết sẽ hết hạn trong <strong>15 phút</strong>.</p>" +
-        "<p style=\"font-size: 14px; color: #999; font-style: italic;\">Nếu bạn không thực hiện hành động này, vui lòng bỏ qua email.</p>" +
-        "</div>";
+    String html = "<html>" +
+        "<body style=\"margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;\">" +
+
+        "  <div style=\"max-width:600px;margin:40px auto;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e5e7eb;\">" +
+
+        "    <div style=\"background:#000000;padding:40px 20px;text-align:center;\">" +
+        "      <h1 style=\"margin:0;font-size:30px;font-weight:800;letter-spacing:4px;color:#ffffff;\">" +
+        "        LUXE<span style=\"color:#8B0000;\">BARBER</span>" +
+        "      </h1>" +
+        "    </div>" +
+
+        "    <div style=\"padding:50px 35px;text-align:center;\">" +
+
+        "      <div style=\"width:80px;height:80px;margin:0 auto 30px auto;" +
+        "                  background:#ecfdf3;border-radius:50%;line-height:80px;" +
+        "                  font-size:40px;color:#22c55e;font-weight:bold;\">" +
+        "        ✓" +
+        "      </div>" +
+
+        "      <h2 style=\"margin:0 0 20px 0;font-size:28px;font-weight:700;color:#111827;\">" +
+        "        Đặt lịch thành công" +
+        "      </h2>" +
+
+        "      <p style=\"margin:0;font-size:16px;line-height:1.8;color:#4b5563;\">" +
+        "        Lịch hẹn của quý khách đã được xác nhận trên hệ thống.<br>" +
+        "        Vui lòng đến đúng giờ để được phục vụ tốt nhất." +
+        "      </p>" +
+
+        "    </div>" +
+
+        "    <div style=\"background:#fafafa;padding:20px;text-align:center;border-top:1px solid #e5e7eb;\">" +
+        "      <p style=\"margin:0;font-size:12px;color:#9ca3af;\">" +
+        "        © 2026 LUXEBARBER. All rights reserved." +
+        "      </p>" +
+        "    </div>" +
+
+        "  </div>" +
+
+        "</body>" +
+        "</html>";
+
     barberApiService.sendEmail(email, html, subject, true);
   }
 }

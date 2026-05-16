@@ -2,6 +2,7 @@
 SERVER_DEPLOY=192.168.155.63
 TARGET_DIR=/opt/deploy/barber/api
 APP_ID=barber-auth
+PORT=8787
 PACKAGE_NAME=com.barber.api
 
 echo "Build source..."
@@ -20,6 +21,7 @@ cp config/* release/
 rm -rf release/application-prod.properties
 sed -i "s/{ENV}/local/g" release/application.properties
 sed -i "s/{APP_ID}/$APP_ID/g" release/application-local.properties
+sed -i "s/{PORT}/$PORT/g" release/application-local.properties
 sed -i "s/{PACKAGE_NAME}/$PACKAGE_NAME/g" release/application-local.properties
 sed -i "s/{PACKAGE_NAME}/$PACKAGE_NAME/g" release/logback-spring.xml
 

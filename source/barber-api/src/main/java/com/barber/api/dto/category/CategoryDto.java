@@ -10,6 +10,8 @@ public class CategoryDto{
   private String description;
   private String image;
   private Boolean isSelected;
+  private Integer kind;
+  private Integer orderInParent;
   private List<CategoryAdditionalInfoDto> additionalInfoList;
   private CategoryDto parent;
 }
