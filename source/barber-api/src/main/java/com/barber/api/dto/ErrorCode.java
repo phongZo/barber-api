@@ -64,11 +64,8 @@ public class ErrorCode {
      * */
     public static final String BOOKING_ERROR_NOT_FOUND = "ERROR-BOOKING-0000";
     public static final String BOOKING_ERROR_EXIST = "ERROR-BOOKING-0001";
-    public static final String BOOKING_ERROR_INVALID_ACTION = "ERROR-BOOKING-0002";
-    public static final String BOOKING_ERROR_TOKEN_EXPIRED = "ERROR-BOOKING-0003";
-    public static final String BOOKING_ERROR_INVALID_EMAIL = "ERROR-BOOKING-0004";
-    public static final String BOOKING_ERROR_INVALID_STATUS = "ERROR-BOOKING-0005";
-    public static final String BOOKING_ERROR_INVALID_TIME = "ERROR-BOOKING-0006";
+    public static final String BOOKING_ERROR_INVALID_STATUS = "ERROR-BOOKING-0002";
+    public static final String BOOKING_ERROR_INVALID_TIME = "ERROR-BOOKING-0003";
 
     /**
      * Starting error code GROUP

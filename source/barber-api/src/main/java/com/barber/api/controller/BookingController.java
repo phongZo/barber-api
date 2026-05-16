@@ -12,8 +12,6 @@ import com.barber.api.dto.bookingService.BookingServiceDto;
 import com.barber.api.exception.BadRequestException;
 import com.barber.api.exception.NotFoundException;
 import com.barber.api.exception.UnauthorizationException;
-import com.barber.api.form.booking.BookingCustomerInfoForm;
-import com.barber.api.form.booking.BookingTokenRequestForm;
 import com.barber.api.form.booking.CancelBookingForm;
 import com.barber.api.form.booking.CreateBookingForm;
 import com.barber.api.form.booking.UpdateStatusBookingForm;
@@ -33,8 +31,6 @@ import com.barber.api.repository.BranchRepository;
 import com.barber.api.repository.CustomerRepository;
 import com.barber.api.repository.ServiceRepository;
 import com.barber.api.service.BarberApiService;
-import com.barber.api.utils.BookingTokenUtils;
-import com.barber.api.utils.ConvertUtils;
 import com.barber.api.utils.JsonUtils;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -42,7 +38,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -151,11 +146,7 @@ public class BookingController extends ABasicController{
     bookingRepository.save(booking);
 
     if (isGuest) {
-      String token = BookingTokenUtils.generateToken(
-          createBookingForm.getCustomerInfo().getEmail(),
-          booking.getId()
-      );
-      sendConfirmCreateEmail(createBookingForm.getCustomerInfo().getEmail(), token);
+      sendSuccessBooking(createBookingForm.getCustomerInfo().getEmail());
     }
 
     double totalPrice = 0;
@@ -346,49 +337,50 @@ public class BookingController extends ABasicController{
     return apiMessageDto;
   }
 
-  @PutMapping("/confirm-create")
-  public ApiMessageDto<String> confirmCreate(@Valid @RequestBody BookingTokenRequestForm bookingTokenRequestForm, BindingResult bindingResult) {
-    ApiMessageDto<String> apiMessageDto = new ApiMessageDto<>();
-    Map<String, Object> data = BookingTokenUtils.parseToken(bookingTokenRequestForm.getToken());
-    Long bookingId = ConvertUtils.convertStringToLong(data.get("bookingId").toString());
-    String email = data.get("email").toString();
-    Long exp = ConvertUtils.convertStringToLong(data.get("exp").toString());
-    Booking booking = bookingRepository.findById(bookingId)
-        .orElseThrow(() -> new NotFoundException("Booking not found", ErrorCode.BOOKING_ERROR_NOT_FOUND));
+  private void sendSuccessBooking(String email){
+    String subject = "LUXEBARBER - Đặt lịch thành công";
 
-    if (System.currentTimeMillis() > exp) {
-      booking.setStatus(BarberConstant.BOOKING_STATUS_CANCELED);
-      bookingRepository.save(booking);
-      throw new BadRequestException("Token expired", ErrorCode.BOOKING_ERROR_TOKEN_EXPIRED);
-    }
+    String html = "<html>" +
+        "<body style=\"margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;\">" +
 
-    BookingCustomerInfoForm info = JsonUtils.convertJsonStringToClass(booking.getCustomerInfo(), BookingCustomerInfoForm.class);
+        "  <div style=\"max-width:600px;margin:40px auto;background:#ffffff;border-radius:20px;overflow:hidden;border:1px solid #e5e7eb;\">" +
 
-    if (!email.equals(info.getEmail())) {
-      throw new BadRequestException("Invalid email", ErrorCode.BOOKING_ERROR_INVALID_EMAIL);
-    }
+        "    <div style=\"background:#000000;padding:40px 20px;text-align:center;\">" +
+        "      <h1 style=\"margin:0;font-size:30px;font-weight:800;letter-spacing:4px;color:#ffffff;\">" +
+        "        LUXE<span style=\"color:#8B0000;\">BARBER</span>" +
+        "      </h1>" +
+        "    </div>" +
 
-    booking.setStatus(BarberConstant.BOOKING_STATUS_BOOKING);
-    bookingRepository.save(booking);
-    apiMessageDto.setMessage("Booking confirmed");
-    return apiMessageDto;
-  }
+        "    <div style=\"padding:50px 35px;text-align:center;\">" +
 
-  private void sendConfirmCreateEmail(String email, String token){
-    String subject = "Xác nhận lịch đặt";
-    String link = "https://client-barber.plsolution.online/confirm-create?token=" + token;
-    String html = "<div style=\"font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; background-color: #f9f9f9;\">" +
-        "<h2 style=\"color: #2c3e50; text-align: center;\">Xác nhận lịch đặt</h2>" +
-        "<p style=\"font-size: 16px; line-height: 1.6;\">Bạn vừa thực hiện đặt lịch tại hệ thống.</p>" +
-        "<p style=\"font-size: 16px; line-height: 1.6;\">Vui lòng nhấn nút bên dưới để xác nhận lịch của bạn:</p>" +
-        "<div style=\"text-align: center; margin: 20px 0;\">" +
-        "<a href=\"" + link + "\" " +
-        "style=\"display: inline-block; padding: 12px 24px; font-size: 16px; color: #fff; background-color: #28a745; text-decoration: none; border-radius: 5px;\">" +
-        "Xác nhận đặt lịch</a>" +
-        "</div>" +
-        "<p style=\"font-size: 16px; line-height: 1.6; color: #555;\">Liên kết sẽ hết hạn trong <strong>15 phút</strong>.</p>" +
-        "<p style=\"font-size: 14px; color: #999; font-style: italic;\">Nếu bạn không thực hiện hành động này, vui lòng bỏ qua email.</p>" +
-        "</div>";
+        "      <div style=\"width:80px;height:80px;margin:0 auto 30px auto;" +
+        "                  background:#ecfdf3;border-radius:50%;line-height:80px;" +
+        "                  font-size:40px;color:#22c55e;font-weight:bold;\">" +
+        "        ✓" +
+        "      </div>" +
+
+        "      <h2 style=\"margin:0 0 20px 0;font-size:28px;font-weight:700;color:#111827;\">" +
+        "        Đặt lịch thành công" +
+        "      </h2>" +
+
+        "      <p style=\"margin:0;font-size:16px;line-height:1.8;color:#4b5563;\">" +
+        "        Lịch hẹn của quý khách đã được xác nhận trên hệ thống.<br>" +
+        "        Vui lòng đến đúng giờ để được phục vụ tốt nhất." +
+        "      </p>" +
+
+        "    </div>" +
+
+        "    <div style=\"background:#fafafa;padding:20px;text-align:center;border-top:1px solid #e5e7eb;\">" +
+        "      <p style=\"margin:0;font-size:12px;color:#9ca3af;\">" +
+        "        © 2026 LUXEBARBER. All rights reserved." +
+        "      </p>" +
+        "    </div>" +
+
+        "  </div>" +
+
+        "</body>" +
+        "</html>";
+
     barberApiService.sendEmail(email, html, subject, true);
   }
 }
